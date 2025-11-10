@@ -7,14 +7,16 @@ DefaultTitle:str = "MyEditor"
 
 ##TODO: add keybinds
 class UI:
-    def __init__(self, root : tk.Tk, openCB, saveCB, saveAsCB, saveAsEncrCB):
+    def __init__(self, root : tk.Tk, openCB, saveCB, saveAsCB, saveAsEncrCB, findCB, undoCB, redoCB):
         self.root: tk.Tk = root
         self.app = 123
         self.openCB = openCB
         self.saveCB = saveCB
         self.saveAsCB = saveAsCB
         self.saveAsEncrCB = saveAsEncrCB
-
+        self.findCB = findCB
+        self.undoCB = undoCB
+        self.redoCB = redoCB
         self.titleMessageAdd = DefaultTitle
         self.fileDisplayName = ""
 
@@ -24,6 +26,7 @@ class UI:
         self.__initMenu()
         self.__initStatus()
         
+
         
     def __initStatus(self):
         self.__status_frame = tk.Frame(self.root)
@@ -42,16 +45,17 @@ class UI:
 
     def __FileMenu(self) -> tk.Menu:
         self.fileMenu = tk.Menu(self.menuBar, tearoff=0, font=(getFont(), 10))
-        self.fileMenu.add_command(label="Open", command=self.openCB, accelerator="Ctrl+O")
+        self.fileMenu.add_command(label="Open", command=self.openCB, accelerator="Ctrl+K")
         self.fileMenu.add_command(label="Save(with current mode)", command = self.saveCB, accelerator="Ctrl+S")
-        self.fileMenu.add_command(label="SaveAs", command = self.saveAsCB)
-        self.fileMenu.add_command(label="SaveAsEncrypted", command=self.saveAsEncrCB)
+        self.fileMenu.add_command(label="SaveAs", command = self.saveAsCB, accelerator = "Ctrl+A")
+        self.fileMenu.add_command(label="SaveAsEncrypted", command=self.saveAsEncrCB, accelerator = "Ctrl+E")
         return self.fileMenu
     
     def __EditMenu(self) -> tk.Menu:
         editMenu = tk.Menu(self.menuBar, tearoff=0, font=(getFont(), 10))
-        editMenu.add_command(label="Find", command=lambda: {print("Find")})
-        editMenu.add_command(label="Undo", command=lambda: {print("Find")}, accelerator= "Ctrl+Z")
+        editMenu.add_command(label="Find", command=self.findCB)
+        editMenu.add_command(label="Undo", command=self.undoCB, accelerator= "Ctrl+Z")
+        editMenu.add_command(label="Undo", command=self.redoCB, accelerator= "Ctrl+Y")
         return editMenu
     def __ViewMenu(self) -> tk.Menu:
         fileMenu = tk.Menu(self.menuBar, tearoff=0,font=(getFont(), 10))

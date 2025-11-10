@@ -13,7 +13,7 @@ class CallBack:
         self.type = type
         self.call = call
 
-tempName = "~temp."
+tempName = "~$temp."
 
 class FileManager:
     def __init__(self, encryptor: Encryptor) -> None:
@@ -101,7 +101,9 @@ class FileManager:
         
 
     def open(self) -> str:
-        fileName: str = filedialog.askopenfilename(defaultextension="txt", initialdir = "/", title="File input")
+        defaultPath: str = self.loadedFileName
+        if (not(self.fileLoaded)): defaultPath = os.getcwd()
+        fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
         if (fileName):
             with open(fileName, "r") as file:
                 loadedData = file.read()
