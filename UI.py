@@ -1,16 +1,12 @@
 from __future__ import annotations
 import tkinter as tk
 from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from app import Context 
-
-
 
 def getFont():
     return "Arial"
 DefaultTitle:str = "MyEditor"
-
 
 ##TODO: add keybinds
 class UI:
@@ -42,11 +38,11 @@ class UI:
         
     def __FileMenu(self) -> tk.Menu:
         self.fileMenu = tk.Menu(self.__menuBar, tearoff=0, font=(getFont(), 10))
-        app = self.context.app
-        self.fileMenu.add_command(label="Open", command=app.open, accelerator="Ctrl+K")
-        self.fileMenu.add_command(label="Save(with current mode)", command = app.save, accelerator="Ctrl+S")
-        self.fileMenu.add_command(label="SaveAs", command = app.saveAs, accelerator = "Ctrl+A")
-        self.fileMenu.add_command(label="SaveAsEncrypted", command=app.saveAsEncrypted, accelerator = "Ctrl+E")
+        fileManager = self.context.app.fileManager
+        self.fileMenu.add_command(label="Open", command = fileManager.open, accelerator="Ctrl+I")
+        self.fileMenu.add_command(label="Save(with current mode)", command = fileManager.save, accelerator="Ctrl+S")
+        self.fileMenu.add_command(label="SaveAs", command = fileManager.saveAs, accelerator = "Ctrl+A")
+        self.fileMenu.add_command(label="SaveAsEncrypted", command = fileManager.saveAsEncrypted, accelerator = "Ctrl+E")
         return self.fileMenu
     
     def __EditMenu(self) -> tk.Menu:
@@ -67,9 +63,9 @@ class UI:
         
     def onOpen(self, text:str, filename:str):
         self.fileDisplayName = filename
-        self.updateName(filename)
+        self.__updateName(filename)
 
-    def updateName(self, fileName:str):
+    def __updateName(self, fileName:str):
         if (fileName):
             self.root.title(fileName + self.titleMessageAdd)
         else: 
@@ -78,4 +74,4 @@ class UI:
         text = "Encrypted" if isEncr else "Not Encrypted"
         self.__status_label.config(text=text)
         self.titleMessageAdd = f" - {DefaultTitle}[{text}]"
-        self.updateName(self.fileDisplayName)
+        self.__updateName(self.fileDisplayName)

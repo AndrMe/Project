@@ -6,7 +6,7 @@ from UI import UI
 from Editor import Editor
 from Encryptor import Encryptor
 from FileManager import FileManager
-from typing import Optional
+
 
 class Context:
     app: App  
@@ -44,17 +44,13 @@ class App:
 
         self.__bindKeys()
     def __bindKeys(self):
-        self.root.bind("<Control-k>", self.open)     
-        self.root.bind("<Control-s>", self.saveFile) 
-        self.root.bind("<Control-a>", self.saveAs)    
-        self.root.bind("<Control-e>", self.saveAsEncrypted)   
-
+        self.root.bind("<Control-i>", self.fileManager.open)     
+        self.root.bind("<Control-s>", self.fileManager.save) 
+        self.root.bind("<Control-a>", self.fileManager.saveAs)    
+        self.root.bind("<Control-e>", self.fileManager.saveAsEncrypted)   
         
     def run(self):
         self.root.mainloop()
-
-    def saveFile(self, event:Optional[tk.Event] = None):
-        self.save()
 
     def close(self):
         if (self.editor.getModified()):
@@ -62,32 +58,16 @@ class App:
         self.fileManager.saveTemp()
         self.root.destroy()
 
-    def open(self, event:Optional[tk.Event] = None):
-        if (self.editor.getModified()): 
-            self.askSaveDialog()
-        self.fileManager.open()
-
     def autoSave(self):
         if (self.editor.getModified()):
             self.fileManager.autoSave(self.editor.getText())
         self.root.after(int(self.autoSaveTimeSeconds*1000), self.autoSave)
 
-    def save(self, event:Optional[tk.Event] = None):
-        text:str = self.editor.getText()
-        self.fileManager.save(text)
-
-    def saveAs(self, event:Optional[tk.Event] = None):
-        text:str = self.editor.getText()
-        self.fileManager.saveAs(text)
-
-    def saveAsEncrypted(self, event:Optional[tk.Event] = None):
-        text:str = self.editor.getText()
-        self.fileManager.saveAsEncrypted(text)
-
     def askSaveDialog(self):
         answer = messagebox.askyesno("Save File", "Save File?")
         if (answer):
-            text:str = self.editor.getText()
-            saved = self.fileManager.save(text)
+            saved = self.fileManager.save()
             if (not(saved)): self.askSaveDialog()
             self.editor.onFileSave()
+            return True
+        return False
