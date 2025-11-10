@@ -4,7 +4,7 @@ from tkinter import filedialog
 from typing import Optional
 import os
 from typing import TYPE_CHECKING
-
+from  psswd import *
 if TYPE_CHECKING:
     from app import Context 
 
@@ -19,12 +19,28 @@ class FileManager:
         self.fileUploaded:bool = False
         self.isEncrypted = False
 
+        self.psswdHash: str | None = None
+    def getPassword(self) -> str | None:
+        
+        if self.psswdHash:
+            return self.psswdHash
+        pw = showPasswordDialog(self.context.app.root)
+        if pw:
+            self.psswdHash = pw
+        return pw
+    def __defaultEncrypt(self,text:str) -> str:
+        hash:str|None
+        while (True):
+            hash = self.getPassword()
+            if hash: break
+        text = self.context.encryptor.encrypt(text, hash)
+        return text
 
     def save(self, event:Optional[tk.Event] = None):
         text:str = self.context.editor.getText()
         fileName: str = self.loadedFileName
         if (self.isEncrypted):
-            text = self.context.encryptor.encrypt(text)
+            text = self.__defaultEncrypt(text)
         if (not(self.fileLoaded)):
             fileName = filedialog.asksaveasfilename(initialfile=self.loadedFileName)
         if (fileName):
@@ -51,15 +67,18 @@ class FileManager:
                                                 defaultextension=".enc",
                                                 filetypes=[
                                                 ("Encrypted files", "*.enc")])
-        fileText = self.context.encryptor.encrypt(text)
-        self.__saveToFilePath(fileName, fileText)
-        self.isEncrypted = True
-        self.__notifyEncryptionMode()
+        if (fileName):
+            self.psswdHash = None
+            self.isEncrypted = True
+            fileText = self.__defaultEncrypt(text)
+            self.__saveToFilePath(fileName, fileText)
+            self.onEncryptionModeChange()
      
     def autoSave(self, text:str) -> None:
         if (not(self.fileLoaded)): return
         if (self.isEncrypted):
-            fileText = self.context.encryptor.encrypt(text)
+            if (not(self.psswdHash)): return
+            fileText = self.__defaultEncrypt(text)
         else: 
             fileText = text
         self.__saveToTemp(fileText)
@@ -72,6 +91,8 @@ class FileManager:
                 print("saved temp file")
             self.__saveToFilePath(self.loadedFileName, tempData)
         
+    def __loadData(self, filename:str):
+        
 
     def open(self, event:Optional[tk.Event] = None) -> str:
         if (self.context.editor.getModified() or not(self.fileUploaded)): 
@@ -82,12 +103,14 @@ class FileManager:
         fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
         if (fileName):
             with open(fileName, "r") as file:
+                
+                self.psswdHash = None
                 loadedData = file.read()
                 self.loadedFileName = fileName
                 self.fileLoaded = True
                 self.fileUploaded = True
                 self.__onOpen(loadedData)
-                self.__notifyEncryptionMode()
+                self.onEncryptionModeChange()
                 return loadedData
         return ""
     
@@ -105,7 +128,7 @@ class FileManager:
                 self.fileLoaded = True
                 self.fileUploaded = False
                 self.__onTempSave()
-                self.__notifyEncryptionMode()
+                self.onEncryptionModeChange()
                 print("Saved To Temp")
     
     def __safeWrite(self, path:str, data:str):
@@ -131,5 +154,10 @@ class FileManager:
         self.context.editor.onFileOpen(text, self.loadedFileName)
         self.context.ui.onOpen(text, self.loadedFileName)
 
-    def __notifyEncryptionMode(self):
+    def onEncryptionModeChange(self):
         self.context.ui.onIsEncrypted(self.isEncrypted)
+        if (not(self.isEncrypted)): self.psswdHash = None
+
+    
+    # Кнопки ОК / Cancel
+    

@@ -23,24 +23,30 @@ class App:
         self.context = Context()
 
         self.root: tk.Tk = tk.Tk()
-        self.editor: Editor = Editor(self.root)
+        self.isAutoSave = True
+        self.autoSaveTimeSeconds = 5
+        
         self.encryptor :Encryptor = Encryptor()
         self.fileManager: FileManager = FileManager(self.context)
 
         self.context.app = self
         self.context.root = self.root
-        self.context.editor = self.editor
         self.context.encryptor = self.encryptor
         self.context.fileManager = self.fileManager
 
         self.ui: UI = UI(self.context)
+        self.editor: Editor = Editor(self.root, self.ui)
+        self.context.editor = self.editor
         self.context.ui = self.ui
+        self.ui.initWindow()
+        self.editor.initTheme()
         
-        self.autoSaveTimeSeconds = 5
+        
         self.autoSave()
         self.root.protocol("WM_DELETE_WINDOW", self.close)
+        
 
-        self.ui.initWindow()
+        
 
         self.__bindKeys()
     def __bindKeys(self):
@@ -59,7 +65,7 @@ class App:
         self.root.destroy()
 
     def autoSave(self):
-        if (self.editor.getModified()):
+        if (self.editor.getModified() and (self.isAutoSave )):
             self.fileManager.autoSave(self.editor.getText())
         self.root.after(int(self.autoSaveTimeSeconds*1000), self.autoSave)
 

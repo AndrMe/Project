@@ -17,10 +17,14 @@ class UI:
         self.titleMessageAdd = DefaultTitle
         self.fileDisplayName = ""
 
+
     def initWindow(self):
         self.root.geometry("1100x800") 
         self.__initMenu()
         self.__initStatus()
+        self.encrypt_enabled = tk.BooleanVar(value=False)
+        self.autosave_enabled = tk.BooleanVar(value=self.context.app.isAutoSave)
+        self.autoSaveIntervalText = tk.IntVar(value=self.context.app.autoSaveTimeSeconds)  
         
     def __initStatus(self):
         self.__status_frame = tk.Frame(self.root)
@@ -33,7 +37,7 @@ class UI:
         self.__addMenu("File", self.__FileMenu())
         self.__addMenu("Edit",self.__EditMenu())
         self.__addMenu("View",self.__ViewMenu())
-        self.__menuBar.add_command(label="Settings", command=lambda: {print("OSettingspen")})
+        self.__menuBar.add_command(label="Settings", command=self.showSettingsWindow)
         self.root.config(menu=self.__menuBar)
         
     def __FileMenu(self) -> tk.Menu:
@@ -53,9 +57,9 @@ class UI:
         return editMenu
     def __ViewMenu(self) -> tk.Menu:
         fileMenu = tk.Menu(self.__menuBar, tearoff=0,font=(getFont(), 10))
-        fileMenu.add_command(label="Font", command=lambda: {print("Font")})
-        fileMenu.add_command(label="FontSize", command=lambda: {print("FontSize")})
-        fileMenu.add_command(label="indent", command=lambda: {print("indent")})
+        fileMenu.add_command(label="Toggle Theme", command=self.context.editor.toggleTheme)
+        fileMenu.add_command(label="Increase Font", command=lambda: self.context.editor.changeFontSize(2))
+        fileMenu.add_command(label="Decrease Font", command=lambda: self.context.editor.changeFontSize(-2))
         return fileMenu
     
     def __addMenu(self, name : str,  menu : tk.Menu):
@@ -70,8 +74,48 @@ class UI:
             self.root.title(fileName + self.titleMessageAdd)
         else: 
             self.root.title(DefaultTitle)
+    def setBackground(self, background):
+        self.__status_frame.configure(bg=background)
+        self.__status_label.configure(bg=background)
+        
     def onIsEncrypted(self, isEncr: bool):
         text = "Encrypted" if isEncr else "Not Encrypted"
+        self.isEncr = isEncr
         self.__status_label.config(text=text)
         self.titleMessageAdd = f" - {DefaultTitle}[{text}]"
         self.__updateName(self.fileDisplayName)
+        self.encrypt_enabled.set(isEncr)
+
+    def showSettingsWindow(self):
+        self.settings_win = tk.Toplevel(self.root)
+        self.settings_win.title("Settings")
+        self.settings_win.geometry("400x300")
+        self.settings_win.resizable(False, False)
+
+        
+
+        # --- Шифрование ---
+        tk.Label(self.settings_win, text="Encryption:").pack(anchor="w", padx=10, pady=(10,0))
+        self.encrypt_cb = tk.Checkbutton(self.settings_win, text="Enable Encryption", variable=self.encrypt_enabled)
+        self.encrypt_cb.pack(anchor="w", padx=20)
+
+        # --- Автосохранение ---
+        tk.Label(self.settings_win, text="Autosave:").pack(anchor="w", padx=10, pady=(10,0))
+        self.autosave_cb = tk.Checkbutton(self.settings_win, text="Enable Autosave", variable=self.autosave_enabled)
+        self.autosave_cb.pack(anchor="w", padx=20)
+
+        # Период автосохранения
+        tk.Label(self.settings_win, text="Autosave interval (sec):").pack(anchor="w", padx=10, pady=(10,0))
+        
+        self.autosave_entry = tk.Entry(self.settings_win, textvariable=self.autoSaveIntervalText, width=10)
+        self.autosave_entry.pack(anchor="w", padx=20)
+        tk.Button(self.settings_win, text="Save", command=self.save_settings).pack(pady=40)
+
+        # Кнопка сохранить настройки и закрыть окно
+    def save_settings(self):
+        # Здесь можно добавить вызов методов контекста для применения новых настроек
+        self.context.app.isAutoSave = self.autosave_enabled.get()
+        self.context.app.autoSaveTimeSeconds = self.autoSaveIntervalText.get()
+        self.context.fileManager.isEncrypted = self.encrypt_enabled.get()
+        self.context.fileManager.onEncryptionModeChange()
+        self.settings_win.destroy()
