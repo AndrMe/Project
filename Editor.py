@@ -1,5 +1,5 @@
 import tkinter as tk
-
+from typing import Optional
 
 class Editor:
     def __init__(self, root : tk.Tk):
@@ -14,13 +14,13 @@ class Editor:
         self.__text.bind("<<Modified>>", self.__onModified)
         self.__text.bind("<Control-y>", self.redo)
         
-    def undo(self,event=None):
+    def undo(self, event:Optional[tk.Event] = None):
         try:
             self.__text.edit_undo()
         except tk.TclError:
             pass
 
-    def redo(self,event=None):
+    def redo(self, event:Optional[tk.Event] = None):
         try:
             self.__text.edit_redo()
         except tk.TclError:

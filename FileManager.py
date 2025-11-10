@@ -1,36 +1,28 @@
+from __future__ import annotations
 from tkinter import filedialog
-from Encryptor import Encryptor
-from enum import Enum
 import os
 
-class CallbackType(Enum):
-    Save = 1
-    Open = 2
-    ISEncrypted = 3
+from typing import TYPE_CHECKING
 
-class CallBack:
-    def __init__(self, type:CallbackType, call) -> None:
-        self.type = type
-        self.call = call
+if TYPE_CHECKING:
+    from app import Context 
 
 tempName = "~$temp."
 
 class FileManager:
-    def __init__(self, encryptor: Encryptor) -> None:
-        self.encryptor = encryptor
-        self.__onCallback: list[CallBack] = []
+    def __init__(self, context: Context) -> None:
+        self.context = context
+
         #fields
         self.loadedFileName:str = ""
         self.fileLoaded: bool = False
         self.fileUploaded:bool = False
         self.isEncrypted = False
 
-    def registerCall(self, callBack: CallBack):
-        self.__onCallback.append(callBack)
-
     def __safeWrite(self, place:str, text:str):
         self.saveToTemp(text)
         os.replace(self.getTempPath(), place)
+
     def saveToPlace(self, place:str, text:str) -> bool:
         if (place):
             # with open(place, "w") as file:
@@ -46,7 +38,7 @@ class FileManager:
     def save(self, text:str) -> bool:
         fileName: str = self.loadedFileName
         if (self.isEncrypted):
-            text = self.encryptor.encrypt(text)
+            text = self.context.encryptor.encrypt(text)
         if (not(self.fileLoaded)):
             fileName = filedialog.asksaveasfilename(initialfile=self.loadedFileName)
         
@@ -58,25 +50,29 @@ class FileManager:
             self.isEncrypted = False
             return True
         return False
+    
     def getEncName(self, name:str):
         return name + ".enc"
+    
     def saveAsEncrypted(self, text:str) -> None:
         fileName = filedialog.asksaveasfilename(initialfile=self.getEncName(self.loadedFileName), 
                                                 defaultextension=".enc",
                                                 filetypes=[
                                                 ("Encrypted files", "*.enc")])
-        fileText = self.encryptor.encrypt(text)
+        fileText = self.context.encryptor.encrypt(text)
         self.saveToPlace(fileName, fileText)
         self.isEncrypted = True
+        self.__notifyEncryptionMode()
  
     def getTempPath(self):
         baseName = os.path.basename(self.loadedFileName)
         dir = os.path.dirname(self.loadedFileName)
         return dir+ R"/" + tempName +baseName 
+    
     def autoSave(self, text:str) -> None:
         if (not(self.fileLoaded)): return
         if (self.isEncrypted):
-            fileText = self.encryptor.encrypt(text)
+            fileText = self.context.encryptor.encrypt(text)
         else: 
             fileText = text
         self.saveToTemp(fileText)
@@ -88,7 +84,7 @@ class FileManager:
                 file.write(fileText)
                 self.fileLoaded = True
                 self.fileUploaded = False
-                self.__notifySave()
+                self.__onSave()
                 self.__notifyEncryptionMode()
     def saveTemp(self):
         tempPath = self.getTempPath()
@@ -109,24 +105,20 @@ class FileManager:
                 loadedData = file.read()
                 self.loadedFileName = fileName
                 self.fileLoaded = True
-                self.__notifyOpen(loadedData)
+                self.__onOpen(loadedData)
                 self.__notifyEncryptionMode()
                 return loadedData
         return ""
+    
     def __removeTemp(self):
         if (os.path.exists(self.getTempPath())):
             os.remove(self.getTempPath())
-    def __notifySave(self):
-        print(f"Saved")
-        for call in self.__onCallback:
-            if (call.type == CallbackType.Save):
-                call.call()
-    def __notifyOpen(self, text:str):
-        print(f"Opened")
-        for call in self.__onCallback:
-            if (call.type == CallbackType.Open):
-                call.call(text, self.loadedFileName)
+
+    def __onSave(self):
+        self.context.editor.onFileSave()
+
+    def __onOpen(self, text:str):
+        self.context.editor.onFileOpen(text, self.loadedFileName)
+
     def __notifyEncryptionMode(self):
-        for call in self.__onCallback:
-            if (call.type == CallbackType.ISEncrypted):
-                call.call(self.isEncrypted)
+        self.context.ui.onIsEncrypted(self.isEncrypted)
