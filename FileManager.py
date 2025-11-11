@@ -13,151 +13,105 @@ tempName = "~$temp."
 class FileManager:
     def __init__(self, context: Context) -> None:
         self.context = context
+        self.encryptor = context.encryptor
         #fields
-        self.loadedFileName:str = ""
-        self.fileLoaded: bool = False
-        self.fileUploaded:bool = False
+        self.loadedFileName:Optional[str|None] = None
         self.isEncrypted = False
 
         self.psswdHash: str | None = None
+
+
+    def save(self, text:str)->bool:
+        fileName = self.loadedFileName
+        if (not(fileName)):
+            fileName = filedialog.asksaveasfilename(initialfile=self.loadedFileName)
+        if (fileName):
+            if (self.isEncrypted):
+                passwd = self.getPassword()
+                if (not(passwd)): return False
+                text = self.__encrypt(text, passwd)
+            self.__safeSaveToDisc(text, fileName)
+            return True
+
+    def saveAs(self, text:str):
+        suggest = self.__removeEncName(self.loadedFileName)
+        fileName = filedialog.asksaveasfilename(initialfile=suggest)
+        if (fileName):
+            self.__safeSaveToDisc(text, fileName)
+            self.setEncr(False)
+            
+    def setEncr(self, encr:bool):
+        if (not(encr)):
+            self.isEncrypted = False
+            self.psswdHash = None
+        else:
+            self.isEncrypted = True
+    def saveAsEncr(self, text:str):
+        suggest = self.__getEncName(self.loadedFileName)
+        fileName = filedialog.asksaveasfilename(initialfile=suggest)
+        if (fileName):
+            passwd = showPasswordDialog(self.context.app.root)
+            if (not(passwd)): return
+            encryptedText = self.__encrypt(text, passwd)
+            self.__safeSaveToDisc(encryptedText, fileName)
+            self.setEncr(True)
+    def autoSave(self, text:str) -> None:
+        if (not(self.loadedFileName)): return None
+        if (self.isEncrypted):
+            if (not(self.psswdHash)): return None
+            passwd = self.getPassword()
+            if (not(passwd)): return None
+            fileText = self.__encrypt(text, passwd)
+        else: 
+            fileText = text
+        tempPath = self.__tempPath(self.loadedFileName)
+        with open(tempPath, "w") as file:
+                file.write(fileText)
+                print("Saved To Temp")
+
+
+    def __encrypt(self, text:str, psswdHash:str)->str:
+        return self.encryptor.encrypt(text, psswdHash)
     def getPassword(self) -> str | None:
-        
         if self.psswdHash:
             return self.psswdHash
         pw = showPasswordDialog(self.context.app.root)
         if pw:
             self.psswdHash = pw
         return pw
-    def __defaultEncrypt(self,text:str) -> str:
-        hash:str|None
-        while (True):
-            hash = self.getPassword()
-            if hash: break
-        text = self.context.encryptor.encrypt(text, hash)
-        return text
+    def open(self)->Optional[str|None]:
+        if (not(self.loadedFileName)): defaultPath = os.getcwd()
+        else: defaultPath: str = self.loadedFileName
+        fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
+        
+        if (fileName and os.path.exists(fileName)):
+            text = self.__read(fileName)
+            return text
+        return None
+    def __read(self, fileName:str)->str:
+        with open(fileName, "r") as file:
+            loadedData = file.read()
+            self.loadedFileName = fileName
+            return loadedData
 
-    def save(self, event:Optional[tk.Event] = None):
-        text:str = self.context.editor.getText()
-        fileName: str = self.loadedFileName
-        if (self.isEncrypted):
-            text = self.__defaultEncrypt(text)
-        if (not(self.fileLoaded)):
-            fileName = filedialog.asksaveasfilename(initialfile=self.loadedFileName)
-        if (fileName):
-            self.__saveToFilePath(fileName, text) 
-            return True
-        else: 
-            return False
+    def __safeSaveToDisc(self, text: str, path:str):
+        tempPath = self.__tempPath(path)
+        if (tempPath):
+            with open(tempPath, "w") as file:
+                file.write(text)
+                self.loadedFileName = path
+                print("Saved To Temp")
+        os.replace(tempPath, path)
+        print("Saved To Disc")
     
-    def saveAs(self, event:Optional[tk.Event] = None):
-        text:str = self.context.editor.getText()
-        fileName = filedialog.asksaveasfilename(initialfile=self.loadedFileName)
-        if (fileName):
-            self.__saveToFilePath(fileName, text)
-            self.isEncrypted = False
-            return True
-        return False
-    
+
+    def __tempPath(self, path:str)->str:
+        baseName = os.path.basename(path)
+        dir = os.path.dirname(path)
+        return dir+ R"/" + tempName +baseName 
     def __getEncName(self, name:str):
         return name + ".enc"
-    
-    def saveAsEncrypted(self, event:Optional[tk.Event] = None) -> None:
-        text:str = self.context.editor.getText()
-        fileName = filedialog.asksaveasfilename(initialfile=self.__getEncName(self.loadedFileName), 
-                                                defaultextension=".enc",
-                                                filetypes=[
-                                                ("Encrypted files", "*.enc")])
-        if (fileName):
-            self.psswdHash = None
-            self.isEncrypted = True
-            fileText = self.__defaultEncrypt(text)
-            self.__saveToFilePath(fileName, fileText)
-            self.onEncryptionModeChange()
-     
-    def autoSave(self, text:str) -> None:
-        if (not(self.fileLoaded)): return
-        if (self.isEncrypted):
-            if (not(self.psswdHash)): return
-            fileText = self.__defaultEncrypt(text)
-        else: 
-            fileText = text
-        self.__saveToTemp(fileText)
-    def saveTemp(self):
-        tempPath = self.__getTempPath()
-        if (os.path.exists(tempPath)):
-            tempData:str
-            with open(tempPath, "r") as file:
-                tempData = file.read()
-                print("saved temp file")
-            self.__saveToFilePath(self.loadedFileName, tempData)
-        
-    def __loadData(self, filename:str):
-        
-
-    def open(self, event:Optional[tk.Event] = None) -> str:
-        if (self.context.editor.getModified() or not(self.fileUploaded)): 
-            self.context.app.askSaveDialog()
-        self.__removeTemp()
-        defaultPath: str = self.loadedFileName
-        if (not(self.fileLoaded)): defaultPath = os.getcwd()
-        fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
-        if (fileName):
-            with open(fileName, "r") as file:
-                
-                self.psswdHash = None
-                loadedData = file.read()
-                self.loadedFileName = fileName
-                self.fileLoaded = True
-                self.fileUploaded = True
-                self.__onOpen(loadedData)
-                self.onEncryptionModeChange()
-                return loadedData
-        return ""
-    
-    def __getTempPath(self):
-        baseName = os.path.basename(self.loadedFileName)
-        dir = os.path.dirname(self.loadedFileName)
-        return dir+ R"/" + tempName +baseName 
-
-        
-    def __saveToTemp(self, fileText:str):
-        resName = self.__getTempPath()
-        if (resName):
-            with open(resName, "w") as file:
-                file.write(fileText)
-                self.fileLoaded = True
-                self.fileUploaded = False
-                self.__onTempSave()
-                self.onEncryptionModeChange()
-                print("Saved To Temp")
-    
-    def __safeWrite(self, path:str, data:str):
-        self.__saveToTemp(data)
-        os.replace(self.__getTempPath(), path)
-        print("Saved To Disc")
-
-    def __saveToFilePath(self, path:str, data:str):
-        self.__safeWrite(path, data)
-        self.__removeTemp()
-        self.loadedFileName = path
-        self.fileUploaded = True
-       
-    
-    def __removeTemp(self):
-        if (os.path.exists(self.__getTempPath())):
-            os.remove(self.__getTempPath())
-
-    def __onTempSave(self):
-        self.context.editor.onFileSave()
-
-    def __onOpen(self, text:str):
-        self.context.editor.onFileOpen(text, self.loadedFileName)
-        self.context.ui.onOpen(text, self.loadedFileName)
-
-    def onEncryptionModeChange(self):
-        self.context.ui.onIsEncrypted(self.isEncrypted)
-        if (not(self.isEncrypted)): self.psswdHash = None
-
-    
-    # Кнопки ОК / Cancel
-    
+    def __removeEncName(self, name:str):
+        if (name.endswith(".enc")):
+            return name.removesuffix(".enc")
+        return name

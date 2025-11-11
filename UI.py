@@ -1,6 +1,7 @@
 from __future__ import annotations
 import tkinter as tk
 from typing import TYPE_CHECKING
+from typing import Optional
 if TYPE_CHECKING:
     from app import Context 
 
@@ -42,11 +43,11 @@ class UI:
         
     def __FileMenu(self) -> tk.Menu:
         self.fileMenu = tk.Menu(self.__menuBar, tearoff=0, font=(getFont(), 10))
-        fileManager = self.context.app.fileManager
-        self.fileMenu.add_command(label="Open", command = fileManager.open, accelerator="Ctrl+I")
-        self.fileMenu.add_command(label="Save(with current mode)", command = fileManager.save, accelerator="Ctrl+S")
-        self.fileMenu.add_command(label="SaveAs", command = fileManager.saveAs, accelerator = "Ctrl+A")
-        self.fileMenu.add_command(label="SaveAsEncrypted", command = fileManager.saveAsEncrypted, accelerator = "Ctrl+E")
+        app = self.context.app
+        self.fileMenu.add_command(label="Open", command = app.open, accelerator="Ctrl+I")
+        self.fileMenu.add_command(label="Save(with current mode)", command = app.save, accelerator="Ctrl+S")
+        self.fileMenu.add_command(label="SaveAs", command = app.saveAs, accelerator = "Ctrl+A")
+        self.fileMenu.add_command(label="SaveAsEncrypted", command = app.saveAsEncrypted, accelerator = "Ctrl+E")
         return self.fileMenu
     
     def __EditMenu(self) -> tk.Menu:
@@ -65,11 +66,11 @@ class UI:
     def __addMenu(self, name : str,  menu : tk.Menu):
         self.__menuBar.add_cascade(label = name, menu = menu)
         
-    def onOpen(self, text:str, filename:str):
+    def onOpen(self, filename:Optional[str|None]):
         self.fileDisplayName = filename
         self.__updateName(filename)
 
-    def __updateName(self, fileName:str):
+    def __updateName(self, fileName:Optional[str|None]):
         if (fileName):
             self.root.title(fileName + self.titleMessageAdd)
         else: 
@@ -93,7 +94,6 @@ class UI:
         self.settings_win.resizable(False, False)
 
         
-
         # --- Шифрование ---
         tk.Label(self.settings_win, text="Encryption:").pack(anchor="w", padx=10, pady=(10,0))
         self.encrypt_cb = tk.Checkbutton(self.settings_win, text="Enable Encryption", variable=self.encrypt_enabled)
@@ -109,13 +109,7 @@ class UI:
         
         self.autosave_entry = tk.Entry(self.settings_win, textvariable=self.autoSaveIntervalText, width=10)
         self.autosave_entry.pack(anchor="w", padx=20)
-        tk.Button(self.settings_win, text="Save", command=self.save_settings).pack(pady=40)
+        tk.Button(self.settings_win, text="Save", command=self.context.app.save_settings).pack(pady=40)
 
         # Кнопка сохранить настройки и закрыть окно
-    def save_settings(self):
-        # Здесь можно добавить вызов методов контекста для применения новых настроек
-        self.context.app.isAutoSave = self.autosave_enabled.get()
-        self.context.app.autoSaveTimeSeconds = self.autoSaveIntervalText.get()
-        self.context.fileManager.isEncrypted = self.encrypt_enabled.get()
-        self.context.fileManager.onEncryptionModeChange()
-        self.settings_win.destroy()
+    

@@ -51,7 +51,7 @@ class Editor:
         self.__root = root
         self.ui = ui
         #field
-        self.__modified = False
+        self.modified = False
         #initialization
         self.__theme = theme
         self.__font = font.Font(family="Consolas", size=12)
@@ -225,18 +225,13 @@ class Editor:
         self.setText(text)
 
     def __notModified(self):
-        self.__modified = False
-
-    def __onModified(self, event: tk.Event):
-        if self.__text.edit_modified():
-            self.__modified = True
-            self.__text.edit_modified(False)
-    def getModified(self):
-        return self.__modified
+        self.modified = False
+    
+    
     def getText(self) -> str: 
         return self.__text.get(1.0, tk.END)
-    
-    def onFileSave(self):
-        self.__modified = False
-        
+    def __onModified(self, event: tk.Event):
+        if self.__text.edit_modified():
+            self.modified = True
+            self.__text.edit_modified(False)
     

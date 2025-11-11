@@ -6,7 +6,7 @@ from UI import UI
 from Editor import Editor
 from Encryptor import Encryptor
 from FileManager import FileManager
-
+from typing import Optional
 
 class Context:
     app: App  
@@ -24,14 +24,16 @@ class App:
 
         self.root: tk.Tk = tk.Tk()
         self.isAutoSave = True
+        self.isAutoSaved = False
         self.autoSaveTimeSeconds = 5
         
         self.encryptor :Encryptor = Encryptor()
+        self.context.encryptor = self.encryptor
         self.fileManager: FileManager = FileManager(self.context)
 
         self.context.app = self
         self.context.root = self.root
-        self.context.encryptor = self.encryptor
+        
         self.context.fileManager = self.fileManager
 
         self.ui: UI = UI(self.context)
@@ -50,30 +52,71 @@ class App:
 
         self.__bindKeys()
     def __bindKeys(self):
-        self.root.bind("<Control-i>", self.fileManager.open)     
-        self.root.bind("<Control-s>", self.fileManager.save) 
-        self.root.bind("<Control-a>", self.fileManager.saveAs)    
-        self.root.bind("<Control-e>", self.fileManager.saveAsEncrypted)   
-        
+        self.root.bind("<Control-i>", self.open)     
+        self.root.bind("<Control-s>", self.save) 
+        self.root.bind("<Control-a>", self.saveAs)    
+        self.root.bind("<Control-e>", self.saveAsEncrypted)   
+    
+    def save(self, event:Optional[tk.Event] = None):
+        text = self.editor.getText()
+        self.fileManager.save(text)
+        self.editor.modified = False
+        self.isAutoSaved = False
+        self.ui.onOpen(self.fileManager.loadedFileName)
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+    def saveAs(self, event:Optional[tk.Event] = None):
+        text = self.editor.getText()
+        self.fileManager.saveAs(text)
+        self.editor.modified = False
+        self.isAutoSaved = False
+        self.ui.onOpen(self.fileManager.loadedFileName)
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+    def saveAsEncrypted(self, event:Optional[tk.Event] = None):
+        text = self.editor.getText()
+        self.fileManager.saveAsEncr(text)
+        self.editor.modified = False
+        self.isAutoSaved = False
+        self.ui.onOpen(self.fileManager.loadedFileName)
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+    def open(self, event:Optional[tk.Event] = None):
+        if (self.editor.modified or (self.isAutoSaved == True)):
+            self.askSaveDialog()
+        text = self.fileManager.open()
+        if (text != None):
+            self.editor.setText(text)
+            self.editor.modified = False
+            self.ui.onOpen(self.fileManager.loadedFileName)
+            self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+    def save_settings(self):
+        # Здесь можно добавить вызов методов контекста для применения новых настроек
+        self.context.app.isAutoSave = self.ui.autosave_enabled.get()
+        self.context.app.autoSaveTimeSeconds = self.ui.autoSaveIntervalText.get()
+        self.context.fileManager.setEncr(self.ui.encrypt_enabled.get())
+        # self.context.fileManager.onEncryptionModeChange()
+        self.ui.settings_win.destroy()
+
     def run(self):
         self.root.mainloop()
 
     def close(self):
-        if (self.editor.getModified()):
+        if (self.editor.modified):
             self.askSaveDialog()
-        self.fileManager.saveTemp()
         self.root.destroy()
 
     def autoSave(self):
-        if (self.editor.getModified() and (self.isAutoSave )):
-            self.fileManager.autoSave(self.editor.getText())
+        if (self.editor.modified and (self.isAutoSave)):
+            success = self.fileManager.autoSave(self.editor.getText())
+            if (success):
+                self.editor.modified = False
+                self.isAutoSaved = True
         self.root.after(int(self.autoSaveTimeSeconds*1000), self.autoSave)
 
     def askSaveDialog(self):
         answer = messagebox.askyesno("Save File", "Save File?")
         if (answer):
-            saved = self.fileManager.save()
+            text = self.editor.getText()
+            saved = self.fileManager.save(text)
             if (not(saved)): self.askSaveDialog()
-            self.editor.onFileSave()
+            self.editor.modified = False
             return True
         return False
