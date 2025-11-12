@@ -1,9 +1,39 @@
+import base64
+import hashlib
+from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
 
+MAGIC_HEADER = "MYENC1\n"
 
 class Encryptor:
     def __init__(self):
-        pass
+        self.wasEncrypted = False
+    def derive_key(self, password: str) -> bytes:        
+        hash_bytes = hashlib.sha256(password.encode("utf-8")).digest()  
+        return base64.urlsafe_b64encode(hash_bytes)  
 
-    def encrypt(self, text:str, hash: str):
-        print("Encrypted")
+    def encrypt(self, text: str, key: bytes):
+        print("encrypted")
+        f = Fernet(key)
+        token = f.encrypt(text.encode("utf-8"))
+        self.wasEncrypted
+        return MAGIC_HEADER + token.decode("utf-8")
+    
+    def decrypt(self, text: str, key: bytes):
+        print("decrypted")
+        f = Fernet(key)
+        decrypted = f.decrypt(text.encode("utf-8"))
+        return decrypted.decode("utf-8")
+    def decryptIfNeeded(self, text: str, hashCallBacl: callable):
+        if text.startswith(MAGIC_HEADER):
+            text = text[len(MAGIC_HEADER):]  # убираем MAGIC_HEADER правильно
+            decrypted = None
+            try:
+                decrypted = self.decrypt(text, hashCallBacl(reset = True))
+                self.wasEncrypted = True
+            except InvalidToken:
+                print("failed to dycrypt")
+                return None
+            return decrypted
+        self.wasEncrypted = False
         return text

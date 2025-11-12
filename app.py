@@ -56,37 +56,30 @@ class App:
         self.root.bind("<Control-s>", self.save) 
         self.root.bind("<Control-a>", self.saveAs)    
         self.root.bind("<Control-e>", self.saveAsEncrypted)   
-    
+    def __notifySaved(self):
+        self.editor.modified = False
+        self.isAutoSaved = False
+        self.ui.onOpen(self.fileManager.loadedFileName)
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
     def save(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
         self.fileManager.save(text)
-        self.editor.modified = False
-        self.isAutoSaved = False
-        self.ui.onOpen(self.fileManager.loadedFileName)
-        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+        self.__notifySaved()
     def saveAs(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
         self.fileManager.saveAs(text)
-        self.editor.modified = False
-        self.isAutoSaved = False
-        self.ui.onOpen(self.fileManager.loadedFileName)
-        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+        self.__notifySaved()
     def saveAsEncrypted(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
         self.fileManager.saveAsEncr(text)
-        self.editor.modified = False
-        self.isAutoSaved = False
-        self.ui.onOpen(self.fileManager.loadedFileName)
-        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+        self.__notifySaved()
     def open(self, event:Optional[tk.Event] = None):
         if (self.editor.modified or (self.isAutoSaved == True)):
             self.askSaveDialog()
         text = self.fileManager.open()
         if (text != None):
             self.editor.setText(text)
-            self.editor.modified = False
-            self.ui.onOpen(self.fileManager.loadedFileName)
-            self.ui.onIsEncrypted(self.fileManager.isEncrypted)
+            self.__notifySaved()
     def save_settings(self):
         # Здесь можно добавить вызов методов контекста для применения новых настроек
         self.context.app.isAutoSave = self.ui.autosave_enabled.get()
