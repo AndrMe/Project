@@ -32,8 +32,7 @@ class App:
         self.fileManager: FileManager = FileManager(self.context)
 
         self.context.app = self
-        self.context.root = self.root
-        
+        self.context.root = self.root  
         self.context.fileManager = self.fileManager
 
         self.ui: UI = UI(self.context)
@@ -43,14 +42,10 @@ class App:
         self.ui.initWindow()
         self.editor.initTheme()
         
-        
         self.autoSave()
-        self.root.protocol("WM_DELETE_WINDOW", self.close)
-        
-
-        
-
         self.__bindKeys()
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+
     def __bindKeys(self):
         self.root.bind("<Control-i>", self.open)     
         self.root.bind("<Control-s>", self.save) 
@@ -85,6 +80,7 @@ class App:
         self.context.app.isAutoSave = self.ui.autosave_enabled.get()
         self.context.app.autoSaveTimeSeconds = self.ui.autoSaveIntervalText.get()
         self.context.fileManager.setEncr(self.ui.encrypt_enabled.get())
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
         # self.context.fileManager.onEncryptionModeChange()
         self.ui.settings_win.destroy()
 
@@ -102,6 +98,7 @@ class App:
             if (success):
                 self.editor.modified = False
                 self.isAutoSaved = True
+                self.__notifySaved()
         self.root.after(int(self.autoSaveTimeSeconds*1000), self.autoSave)
 
     def askSaveDialog(self):

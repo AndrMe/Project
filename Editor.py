@@ -234,4 +234,3 @@ class Editor:
         if self.__text.edit_modified():
             self.modified = True
             self.__text.edit_modified(False)
-    

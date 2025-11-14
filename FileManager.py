@@ -15,6 +15,7 @@ class FileManager:
     def __init__(self, context: Context) -> None:
         self.context = context
         self.encryptor = context.encryptor
+        self.x = 0
         #fields
         self.loadedFileName:Optional[str|None] = None
         self.isEncrypted = False
@@ -62,19 +63,22 @@ class FileManager:
             encryptedText = self.__encrypt(text, passwd)
             self.__safeSaveToDisc(encryptedText, fileName)
             self.setEncr(True)
-    def autoSave(self, text:str) -> None:
-        if (not(self.loadedFileName)): return None
+    def autoSave(self, text:str) -> bool:
+        if (not(self.loadedFileName)): return False
         if (self.isEncrypted):
-            if (not(self.psswdHash)): return None
+            if (not(self.psswdHash)): return False
             passwd = self.getPassword()
-            if (not(passwd)): return None
+            if (not(passwd)): return False
             fileText = self.__encrypt(text, passwd)
         else: 
             fileText = text
         tempPath = self.__tempPath(self.loadedFileName)
         with open(tempPath, "w") as file:
                 file.write(fileText)
-                print("Saved To Temp")
+                self.x = self.x + 1
+                print(f"{self.x}Saved To Temp")
+                return True
+        return False
 
 
     def __encrypt(self, text:str, psswdHash:bytes)->str:

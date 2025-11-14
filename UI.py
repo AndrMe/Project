@@ -25,7 +25,7 @@ class UI:
         self.__initStatus()
         self.encrypt_enabled = tk.BooleanVar(value=False)
         self.autosave_enabled = tk.BooleanVar(value=self.context.app.isAutoSave)
-        self.autoSaveIntervalText = tk.IntVar(value=self.context.app.autoSaveTimeSeconds)  
+        self.autoSaveIntervalText = tk.DoubleVar(value=self.context.app.autoSaveTimeSeconds)  
         
     def __initStatus(self):
         self.__status_frame = tk.Frame(self.root)
