@@ -73,7 +73,7 @@ class FileManager:
         else: 
             fileText = text
         tempPath = self.__tempPath(self.loadedFileName)
-        with open(tempPath, "w") as file:
+        with open(tempPath, "w", encoding="utf-8") as file:
                 file.write(fileText)
                 self.x = self.x + 1
                 print(f"{self.x}Saved To Temp")
@@ -108,14 +108,14 @@ class FileManager:
             return text
         return None
     def __read(self, fileName:str)->str:
-        with open(fileName, "r") as file:
+        with open(fileName, "r", encoding="utf-8") as file:
             loadedData = file.read()
             return loadedData
 
     def __safeSaveToDisc(self, text: str, path:str):
         tempPath = self.__tempPath(path)
         if (tempPath):
-            with open(tempPath, "w") as file:
+            with open(tempPath, "w", encoding="utf-8") as file:
                 file.write(text)
                 self.loadedFileName = path
                 print("Saved To Temp")
