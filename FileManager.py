@@ -97,7 +97,9 @@ class FileManager:
         fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
         
         if (fileName and os.path.exists(fileName)):
-            text = self.__read(fileName)
+            text = self.__checkTempOnOpen(fileName)
+            if (text is None):
+                text = self.__read(fileName)
             text = self.encryptor.decryptIfNeeded(text, self.getPassword)
             if (text != None):
                 self.loadedFileName = fileName
@@ -106,6 +108,19 @@ class FileManager:
                 messagebox.showerror("Ошибка", "Пароль не верен", parent = self.context.app.root)
             return text
         return None
+    def __checkTempOnOpen(self, filename: str) -> Optional[str]:
+        """Проверяем, есть ли автосохранение для данного файла."""
+        temp_path = self.__tempPath(filename)
+        if os.path.exists(temp_path):
+            answer = messagebox.askyesno(
+                "Restore autosave",
+                f"Autosaved version of '{filename}' found. Restore?"
+            )
+            if answer:
+                return self.__read(temp_path)
+            else:
+                os.remove(temp_path)
+        return None 
     def __read(self, fileName:str)->str:
         with open(fileName, "r", encoding="utf-8") as file:
             loadedData = file.read()
