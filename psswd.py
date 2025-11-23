@@ -1,8 +1,7 @@
 import tkinter as tk
+from typing import Optional
 
-
-
-def showPasswordDialog(root,  title="Enter Password") -> str | None:
+def showPasswordDialog(root: tk.Tk,  title: str="Enter Password") -> str | None:
         """Открывает модальное окно для ввода пароля и возвращает строку или None, если закрыто"""
         password = None
 
@@ -20,7 +19,7 @@ def showPasswordDialog(root,  title="Enter Password") -> str | None:
         pw_entry.pack(pady=5)
         pw_entry.focus_set()
 
-        def submit():
+        def submit(event: Optional[tk.Event | None] = None):
             nonlocal password
             password = pw_var.get()
             pw_win.destroy()
@@ -35,5 +34,6 @@ def showPasswordDialog(root,  title="Enter Password") -> str | None:
         tk.Button(btn_frame, text="OK", width=10, command=submit).pack(side="left", padx=5)
         tk.Button(btn_frame, text="Cancel", width=10, command=cancel).pack(side="left", padx=5)
 
+        pw_entry.bind('<Return>', func=submit)
         pw_win.wait_window()  # ждем закрытия окна
         return password

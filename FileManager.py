@@ -2,7 +2,6 @@ from __future__ import annotations
 from tkinter import filedialog, messagebox
 from typing import Optional
 
-import base64
 import os
 from typing import TYPE_CHECKING
 from  psswd import *
