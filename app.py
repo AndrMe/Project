@@ -7,6 +7,7 @@ from Editor import Editor
 from Encryptor import Encryptor
 from FileManager import FileManager
 from typing import Optional
+import time
 
 class Context:
     app: App  
@@ -42,6 +43,8 @@ class App:
         self.ui.initWindow()
         self.editor.initTheme()
         
+        self.lastSaveTime = time.perf_counter()
+
         self.autoSave()
         self.__bindKeys()
         self.root.protocol("WM_DELETE_WINDOW", self.close)
@@ -93,13 +96,17 @@ class App:
         self.root.destroy()
 
     def autoSave(self):
-        if (self.editor.modified and (self.isAutoSave)):
+        now = time.perf_counter()
+        elapsed = now - self.lastSaveTime
+        if (elapsed >= self.autoSaveTimeSeconds
+            and self.editor.modified and (self.isAutoSave)):
             success = self.fileManager.autoSave(self.editor.getText())
             if (success):
                 self.editor.modified = False
                 self.isAutoSaved = True
                 self.__notifySaved()
-        self.root.after(int(self.autoSaveTimeSeconds*1000), self.autoSave)
+                self.lastSaveTime = now
+        self.root.after(16, self.autoSave)
 
     def askSaveDialog(self):
         answer = messagebox.askyesno("Save File", "Save File?")
