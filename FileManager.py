@@ -105,7 +105,7 @@ class FileManager:
                 self.loadedFileName = fileName
                 self.isEncrypted = self.encryptor.wasEncrypted
             else:
-                messagebox.showerror("Ошибка", "Пароль не верен", parent = self.context.app.root)
+                messagebox.showerror("Ошибка", "Пароль не верен, либо файл был изменен", parent = self.context.app.root)
             return text
         return None
     def __checkTempOnOpen(self, filename: str) -> Optional[str]:
