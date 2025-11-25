@@ -21,14 +21,20 @@ class FileManager:
 
         self.psswdHash: bytes | None = None
 
+    def removeTemp(self):
+        if (not(self.loadedFileName)): return
+        name:str = self.__tempPath(self.loadedFileName)
+        if (not(os.path.exists(name))): return
+        os.remove(name)
 
+        
     def save(self, text:str)->bool:
         fileName = self.loadedFileName
         if (not(fileName)):
             fileName = filedialog.asksaveasfilename(initialfile="newFile.txt")
         if (fileName):
             if (self.isEncrypted):
-                passwd = self.getPassword()
+                passwd = self.__getPassword()
                 if (not(passwd)): return False
                 text = self.__encrypt(text, passwd)
             self.__safeSaveToDisc(text, fileName)
@@ -57,7 +63,7 @@ class FileManager:
         else: suggest = "newFile.enc"
         fileName = filedialog.asksaveasfilename(initialfile=suggest)
         if (fileName):
-            passwd = self.getPassword(reset=True)
+            passwd = self.__getPassword(reset=True)
             if (not(passwd)): return
             encryptedText = self.__encrypt(text, passwd)
             self.__safeSaveToDisc(encryptedText, fileName)
@@ -66,7 +72,7 @@ class FileManager:
         if (not(self.loadedFileName)): return False
         if (self.isEncrypted):
             if (not(self.psswdHash)): return False
-            passwd = self.getPassword()
+            passwd = self.__getPassword()
             if (not(passwd)): return False
             fileText = self.__encrypt(text, passwd)
         else: 
@@ -82,7 +88,7 @@ class FileManager:
 
     def __encrypt(self, text:str, psswdHash:bytes)->str:
         return self.encryptor.encrypt(text, psswdHash)
-    def getPassword(self, reset:bool = False) -> bytes | None:
+    def __getPassword(self, reset:bool = False) -> bytes | None:
         if (reset): self.psswdHash = None
         if self.psswdHash:
             return self.psswdHash
@@ -100,7 +106,7 @@ class FileManager:
             text = self.__checkTempOnOpen(fileName)
             if (text is None):
                 text = self.__read(fileName)
-            text = self.encryptor.decryptIfNeeded(text, self.getPassword)
+            text = self.encryptor.decryptIfNeeded(text, self.__getPassword)
             if (text != None):
                 self.loadedFileName = fileName
                 self.isEncrypted = self.encryptor.wasEncrypted

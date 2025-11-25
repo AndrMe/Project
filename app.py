@@ -91,8 +91,8 @@ class App:
         self.root.mainloop()
 
     def close(self):
-        if (self.editor.modified):
-            self.askSaveDialog()
+        if (self.editor.modified or self.isAutoSaved):
+            self.askSaveDialog()            
         self.root.destroy()
 
     def autoSave(self):
@@ -103,8 +103,8 @@ class App:
             success = self.fileManager.autoSave(self.editor.getText())
             if (success):
                 self.editor.modified = False
-                self.isAutoSaved = True
                 self.__notifySaved()
+                self.isAutoSaved = True
                 self.lastSaveTime = now
         self.root.after(16, self.autoSave)
 
@@ -116,4 +116,5 @@ class App:
             if (not(saved)): self.askSaveDialog()
             self.editor.modified = False
             return True
+        self.fileManager.removeTemp()
         return False

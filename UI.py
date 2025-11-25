@@ -93,23 +93,19 @@ class UI:
         self.settings_win.geometry("400x300")
         self.settings_win.resizable(False, False)
 
-        
-        # --- Шифрование ---
+
         tk.Label(self.settings_win, text="Encryption:").pack(anchor="w", padx=10, pady=(10,0))
         self.encrypt_cb = tk.Checkbutton(self.settings_win, text="Enable Encryption", variable=self.encrypt_enabled)
         self.encrypt_cb.pack(anchor="w", padx=20)
 
-        # --- Автосохранение ---
+
         tk.Label(self.settings_win, text="Autosave:").pack(anchor="w", padx=10, pady=(10,0))
         self.autosave_cb = tk.Checkbutton(self.settings_win, text="Enable Autosave", variable=self.autosave_enabled)
         self.autosave_cb.pack(anchor="w", padx=20)
 
-        # Период автосохранения
+
         tk.Label(self.settings_win, text="Autosave interval (sec):").pack(anchor="w", padx=10, pady=(10,0))
         
         self.autosave_entry = tk.Entry(self.settings_win, textvariable=self.autoSaveIntervalText, width=10)
         self.autosave_entry.pack(anchor="w", padx=20)
         tk.Button(self.settings_win, text="Save", command=self.context.app.save_settings).pack(pady=40)
-
-        # Кнопка сохранить настройки и закрыть окно
-    
