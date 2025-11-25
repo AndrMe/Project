@@ -2,6 +2,8 @@ import base64
 import hashlib
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
+from typing import Callable
+from typing import Optional
 
 MAGIC_HEADER = "MYENC1\n"
 
@@ -24,12 +26,16 @@ class Encryptor:
         f = Fernet(key)
         decrypted = f.decrypt(text.encode("utf-8"))
         return decrypted.decode("utf-8")
-    def decryptIfNeeded(self, text: str, hashCallBacl: callable):
+    def decryptIfNeeded(self, text: str, hashCallBacl: Callable[..., Optional[bytes|None]]):
         if text.startswith(MAGIC_HEADER):
             text = text[len(MAGIC_HEADER):]  # убираем MAGIC_HEADER правильно
             decrypted = None
             try:
-                decrypted = self.decrypt(text, hashCallBacl(reset = True))
+                key: bytes|None = hashCallBacl(reset = True)
+                if (key != None): 
+                    decrypted = self.decrypt(text, key)
+                else:
+                    return None
                 self.wasEncrypted = True
             except InvalidToken:
                 print("failed to dycrypt")
