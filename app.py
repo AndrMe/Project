@@ -7,6 +7,7 @@ from Editor import Editor
 from Encryptor import Encryptor
 from FileManager import FileManager
 from typing import Optional
+import config
 import time
 
 class Context:
@@ -24,9 +25,10 @@ class App:
         self.context = Context()
 
         self.root: tk.Tk = tk.Tk()
-        self.isAutoSave = True
+        encrypt, autoSave, asInterval = config.loadSettings()
+        self.isAutoSave = autoSave
         self.isAutoSaved = False
-        self.autoSaveTimeSeconds = 5
+        self.autoSaveTimeSeconds = asInterval
         
         self.encryptor :Encryptor = Encryptor()
         self.context.encryptor = self.encryptor
@@ -43,10 +45,14 @@ class App:
         self.ui.initWindow()
         self.editor.initTheme()
         
-        self.lastSaveTime = time.perf_counter()
+        self.fileManager.setEncr(encrypt)
+        self.ui.onIsEncrypted(self.fileManager.isEncrypted)
 
+        self.lastSaveTime = time.perf_counter()
+        
         self.autoSave()
         self.__bindKeys()
+        
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
     def __bindKeys(self):
@@ -85,6 +91,9 @@ class App:
         self.context.fileManager.setEncr(self.ui.encrypt_enabled.get())
         self.ui.onIsEncrypted(self.fileManager.isEncrypted)
         # self.context.fileManager.onEncryptionModeChange()
+        config.saveSettings(self.context.fileManager.isEncrypted,
+                        self.isAutoSave,
+                        self.autoSaveTimeSeconds)
         self.ui.settings_win.destroy()
 
     def run(self):
@@ -93,13 +102,17 @@ class App:
     def close(self):
         if (self.editor.modified or self.isAutoSaved):
             self.askSaveDialog()            
+        config.saveSettings(self.context.fileManager.isEncrypted,
+                       self.isAutoSave,
+                        self.autoSaveTimeSeconds)
         self.root.destroy()
 
     def autoSave(self):
         now = time.perf_counter()
         elapsed = now - self.lastSaveTime
         if (elapsed >= self.autoSaveTimeSeconds
-            and self.editor.modified and (self.isAutoSave)):
+            and self.editor.modified and (self.isAutoSave)
+            and self.fileManager.loadedFileName):
             success = self.fileManager.autoSave(self.editor.getText())
             if (success):
                 self.editor.modified = False
