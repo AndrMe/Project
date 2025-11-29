@@ -75,7 +75,7 @@ class UI:
             self.root.title(fileName + self.titleMessageAdd)
         else: 
             self.root.title(DefaultTitle)
-    def setBackground(self, background):
+    def setBackground(self, background: str):
         self.__status_frame.configure(bg=background)
         self.__status_label.configure(bg=background)
         

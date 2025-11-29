@@ -2,7 +2,10 @@ import tkinter as tk
 from typing import Optional
 from tkinter import font
 import re
-
+from  psswd import *
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from UI import UI
 from dataclasses import dataclass
 
 @dataclass
@@ -46,7 +49,7 @@ LIGHT_THEME = Theme(
 )
 
 class Editor:
-    def __init__(self, root : tk.Tk,ui,  theme: Theme = LIGHT_THEME):
+    def __init__(self, root : tk.Tk,ui: UI,  theme: Theme = LIGHT_THEME):
         #root
         self.__root = root
         self.ui = ui
@@ -99,7 +102,7 @@ class Editor:
         self.changeFontSize(delta)
         return "break"  # предотвращает прокрутку текста
 
-    def __onCursorMove(self, event=None):
+    def __onCursorMove(self, event: Optional[tk.Event|None]=None):
         self.highlightCurrentLine()    
     def applyTheme(self, theme: Theme):
         self.__theme = theme
@@ -128,12 +131,12 @@ class Editor:
     def toggleTheme(self):
         self.applyTheme(LIGHT_THEME if self.__theme.name == "Dark" else DARK_THEME)
 
-    def __onKeyRelease(self, event=None):
+    def __onKeyRelease(self, event: Optional[tk.Event|None]=None):
         """Обновляем подсветку после любого изменения"""
         self.highlightCurrentLine()
         self.highlightSyntax()
 
-    def highlightCurrentLine(self, event=None):
+    def highlightCurrentLine(self, event: Optional[tk.Event|None]=None):
         self.__text.tag_remove("active_line", "1.0", "end")
         self.__text.tag_add("active_line", "insert linestart", "insert lineend+1c")
         self.__text.tag_lower("active_line")
