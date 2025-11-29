@@ -5,7 +5,8 @@ import re
 from  psswd import *
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from UI import UI
+    from UI import UI 
+
 from dataclasses import dataclass
 
 @dataclass
@@ -15,6 +16,7 @@ class Theme:
     foreground: str
     cursor: str
     select_bg: str
+    curr_select_bg: str
     line_highlight: str
     line_number_bg: str
     line_number_fg: str
@@ -28,6 +30,7 @@ DARK_THEME = Theme(
     foreground="#dcdcdc",
     cursor="#ffffff",
     select_bg="#264f78",
+    curr_select_bg = "#388EA8" ,
     line_highlight="#2a2a2a",
     line_number_bg="#252526",
     line_number_fg="#858585",
@@ -41,6 +44,7 @@ LIGHT_THEME = Theme(
     foreground="#000000",
     cursor="#000000",
     select_bg="#cce8ff",
+    curr_select_bg="#7ba5ff",
     line_highlight="#f0f0f0",
     line_number_bg="#f3f3f3",
     line_number_fg="#555555",
@@ -49,12 +53,13 @@ LIGHT_THEME = Theme(
 )
 
 class Editor:
-    def __init__(self, root : tk.Tk,ui: UI,  theme: Theme = LIGHT_THEME):
-        #root
+    def __init__(self, root : tk.Tk,ui: "UI",  theme: Theme = LIGHT_THEME):
+        
         self.__root = root
         self.ui = ui
-        #field
+
         self.modified = False
+        self.__fullText:str = ""
         #initialization
         self.__theme = theme
         self.__font = font.Font(family="Consolas", size=12)
@@ -82,6 +87,15 @@ class Editor:
         self.__text.bind("<Button-1>", self.__onCursorMove)
         self.__text.bind("<Motion>", self.__onCursorMove)
         self.__text.bind("<Control-MouseWheel>", self.__onCtrlMouseWheel)
+        self.__text.bind("<Control-f>", lambda e: self.openFindDialog())
+        
+        self.__text.tag_config("find_match", background=self.__theme.select_bg) 
+        self.__text.tag_config("find_current", background=self.__theme.curr_select_bg)  
+
+
+        self.__findQuery: str = ""           # последний запрос
+        self.__findPositions: list[tuple[int,str]] = []      # список (start_index, end_index)
+        self.__findCurrentIdx: int = -1
 
         self.setText("")
 
@@ -122,7 +136,7 @@ class Editor:
         self.__text.tag_configure("active_line", background=t.line_highlight)
         self.__text.tag_configure("number", foreground=t.number_color)
         self.highlightCurrentLine()
-        self.highlightSyntax()
+
 
         # self.__line_numbers.config(
         #     bg=t.line_number_bg,
@@ -134,21 +148,13 @@ class Editor:
     def __onKeyRelease(self, event: Optional[tk.Event|None]=None):
         """Обновляем подсветку после любого изменения"""
         self.highlightCurrentLine()
-        self.highlightSyntax()
 
-    def highlightCurrentLine(self, event: Optional[tk.Event|None]=None):
+
+    def highlightCurrentLine(self, event: Optional[tk.Event]=None):
         self.__text.tag_remove("active_line", "1.0", "end")
         self.__text.tag_add("active_line", "insert linestart", "insert lineend+1c")
         self.__text.tag_lower("active_line")
 
-    def highlightSyntax(self):
-        """Простейшая подсветка чисел"""
-        self.__text.tag_remove("number", "1.0", "end")
-        text = self.__text.get("1.0", "end-1c")
-        for match in re.finditer(r"\b\d+(\.\d+)?\b", text):
-            start = f"1.0 + {match.start()}c"
-            end = f"1.0 + {match.end()}c"
-            self.__text.tag_add("number", start, end)
 
               
     def setFont(self, family: str = "Consolas", size: int = 12):
@@ -220,20 +226,100 @@ class Editor:
             pass    
         
     def setText(self, text: str):
+        print("Text starts to set")
         self.__text.edit_modified(False)
         self.__text.delete("1.0", tk.END)
         self.__text.insert(tk.END, text)
         self.__root.after_idle(func = self.__notModified)
-    def onFileOpen(self, text:str, filename:str):
-        self.setText(text)
+        print("Text finished to set")
+    def setFullText(self, text:str):
+        self.__fullText = text
+    
 
     def __notModified(self):
         self.modified = False
     
     
     def getText(self) -> str: 
+        print("Text returning to set")
         return self.__text.get(1.0, tk.END)
     def __onModified(self, event: tk.Event):
         if self.__text.edit_modified():
             self.modified = True
             self.__text.edit_modified(False)
+            
+            self.__findPositions = []
+            self.__findCurrentIdx = -1
+            self.__findQuery = ""
+            self.__text.tag_remove("find_match", "1.0", "end")
+            self.__text.tag_remove("find_current", "1.0", "end")
+    def openFindDialog(self):
+        """Открывает окно поиска"""
+        win = tk.Toplevel(self.__root)
+        win.title("Find")
+        win.geometry("300x100")
+        win.resizable(False, False)
+        win.transient(self.__root)
+
+        tk.Label(win, text="Find:").pack(anchor="w", padx=10, pady=(10,0))
+
+        find_var = tk.StringVar()
+        entry = tk.Entry(win, textvariable=find_var, width=30)
+        entry.pack(padx=10)
+        entry.focus_set()
+
+        def do_find(event: Optional[tk.Event]=None):
+            query = find_var.get()
+            # Если новый запрос — пересчитаем все совпадения
+            if query != self.__findQuery:
+                self.__findQuery = query
+                self.__findCurrentIdx = -1
+                self.__findPositions = []
+                self.__findAll(query)
+
+            # Перейти к следующему совпадению (если есть)
+            self.__findNext()
+
+        entry.bind("<Return>", do_find)
+
+        # Кнопка Find (ведёт к следующему совпадению)
+        tk.Button(win, text="Find", command=do_find).pack(pady=10)
+    def __findAll(self, pattern: str):
+        """Найти все совпадения pattern и подсветить их (заполняет _find_positions)."""
+        # очистим предыдущие теги
+        self.__text.tag_remove("find_match", "1.0", "end")
+        self.__text.tag_remove("find_current", "1.0", "end")
+        self.__findPositions.clear()
+        self.__findCurrentIdx = -1
+
+        if not pattern:
+            return
+
+        start_index = "1.0"
+        while True:
+            pos = self.__text.search(pattern, start_index, stopindex="end", nocase=True)
+            if not pos:
+                break
+            end = f"{pos}+{len(pattern)}c"
+            self.__text.tag_add("find_match", pos, end)
+            # сохраняем позиции в виде (start, end)
+            self.__findPositions.append((pos, end))
+            start_index = end
+
+    def __findNext(self):
+        """Переключиться на следующее совпадение, выделить его другим тегом и проскроллить."""
+        if not self.__findPositions:
+            return
+
+        # снять старое текущее
+        self.__text.tag_remove("find_current", "1.0", "end")
+
+        # переключаем индекс циклично
+        self.__findCurrentIdx = (self.__findCurrentIdx + 1) % len(self.__findPositions)
+
+        start, end = self.__findPositions[self.__findCurrentIdx]
+        # выделяем как текущий
+        self.__text.tag_add("find_current", start, end)
+        # устанавливаем курсор туда и прокручиваем
+        self.__text.mark_set("insert", start)
+        self.__text.see(start)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from tkinter import filedialog, messagebox
 from typing import Optional
+import threading
 
 import os
 from typing import TYPE_CHECKING
@@ -133,6 +134,11 @@ class FileManager:
             return loadedData
 
     def __safeSaveToDisc(self, text: str, path:str):
+        print("Started save")
+        threading.Thread(target=self.__safeSaveToDiscThr, args=(text, path), daemon=True).start()
+        
+    
+    def __safeSaveToDiscThr(self, text: str, path:str):
         tempPath = self.__tempPath(path)
         if (tempPath):
             with open(tempPath, "w", encoding="utf-8") as file:

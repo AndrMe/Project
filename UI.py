@@ -52,7 +52,7 @@ class UI:
     
     def __EditMenu(self) -> tk.Menu:
         editMenu = tk.Menu(self.__menuBar, tearoff=0, font=(getFont(), 10))
-        editMenu.add_command(label="Find", command=lambda: {})
+        editMenu.add_command(label="Find", command=self.context.editor.openFindDialog, accelerator="Ctrl+F")
         editMenu.add_command(label="Undo", command=self.context.editor.undo, accelerator= "Ctrl+Z")
         editMenu.add_command(label="Redo", command=self.context.editor.redo, accelerator= "Ctrl+Y")
         return editMenu

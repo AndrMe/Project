@@ -15,10 +15,11 @@ class Encryptor:
         return base64.urlsafe_b64encode(hash_bytes)  
 
     def encrypt(self, text: str, key: bytes):
-        print("encrypted")
+        print("started encryption")
         f = Fernet(key)
         token = f.encrypt(text.encode("utf-8"))
         self.wasEncrypted
+        print("encrypted")
         return MAGIC_HEADER + token.decode("utf-8")
     
     def decrypt(self, text: str, key: bytes):
