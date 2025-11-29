@@ -1,11 +1,11 @@
 import tkinter as tk
 from typing import Optional
 from tkinter import font
-import re
+
 from  psswd import *
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from UI import UI 
+    from UI import UI
 
 from dataclasses import dataclass
 
@@ -54,7 +54,7 @@ LIGHT_THEME = Theme(
 
 class Editor:
     def __init__(self, root : tk.Tk,ui: "UI",  theme: Theme = LIGHT_THEME):
-        
+
         self.__root = root
         self.ui = ui
 
@@ -74,27 +74,27 @@ class Editor:
             wrap="word",
             undo=True,
             font=self.__font,
-            yscrollcommand=self.__scrollbar.set  # связываем с scrollbar
+            yscrollcommand=self.__scrollbar.set  
         )
         self.__text.pack(expand=True, fill="both")
-        self.__scrollbar.config(command=self.__text.yview)  # двусторонняя связь
-        
+        self.__scrollbar.config(command=self.__text.yview) 
+
         self.__text.bind("<<Modified>>", self.__onModified)
         self.__text.bind("<Control-y>", self.redo)
         self.__text.bind("<Tab>", self.__onTab)
-        self.__text.bind("<Shift-Tab>", self.__onShiftTab)  
-        self.__text.bind("<KeyRelease>", self.__onKeyRelease)   
+        self.__text.bind("<Shift-Tab>", self.__onShiftTab)
+        self.__text.bind("<KeyRelease>", self.__onKeyRelease)
         self.__text.bind("<Button-1>", self.__onCursorMove)
         self.__text.bind("<Motion>", self.__onCursorMove)
         self.__text.bind("<Control-MouseWheel>", self.__onCtrlMouseWheel)
         self.__text.bind("<Control-f>", lambda e: self.openFindDialog())
-        
-        self.__text.tag_config("find_match", background=self.__theme.select_bg) 
-        self.__text.tag_config("find_current", background=self.__theme.curr_select_bg)  
+
+        self.__text.tag_config("find_match", background=self.__theme.select_bg)
+        self.__text.tag_config("find_current", background=self.__theme.curr_select_bg)
 
 
-        self.__findQuery: str = ""           # последний запрос
-        self.__findPositions: list[tuple[int,str]] = []      # список (start_index, end_index)
+        self.__findQuery: str = ""
+        self.__findPositions: list[tuple[int,str]] = []
         self.__findCurrentIdx: int = -1
 
         self.setText("")
@@ -102,7 +102,6 @@ class Editor:
     def initTheme(self):
         self.applyTheme(self.__theme)
     def __onCtrlMouseWheel(self, event: tk.Event):
-        """Изменяет размер шрифта при Ctrl + прокрутка"""
         delta = 0
         if hasattr(event, "delta"):
             delta = 1 if event.delta > 0 else -1
@@ -114,10 +113,10 @@ class Editor:
                 delta = -1
 
         self.changeFontSize(delta)
-        return "break"  # предотвращает прокрутку текста
+        return "break"
 
     def __onCursorMove(self, event: Optional[tk.Event|None]=None):
-        self.highlightCurrentLine()    
+        self.highlightCurrentLine()
     def applyTheme(self, theme: Theme):
         self.__theme = theme
         t = theme
@@ -125,28 +124,22 @@ class Editor:
         self.__frame.configure(bg=t.background)
 
         self.ui.setBackground(t.background)
-        
+
         self.__text.config(
             bg=t.background,
             fg=t.foreground,
             insertbackground=t.cursor,
             selectbackground=t.select_bg,
-            selectforeground=t.foreground  # 🔹 текст выделения теперь виден
+            selectforeground=t.foreground
         )
         self.__text.tag_configure("active_line", background=t.line_highlight)
         self.__text.tag_configure("number", foreground=t.number_color)
         self.highlightCurrentLine()
 
-
-        # self.__line_numbers.config(
-        #     bg=t.line_number_bg,
-        #     fg=t.line_number_fg
-        # )
     def toggleTheme(self):
         self.applyTheme(LIGHT_THEME if self.__theme.name == "Dark" else DARK_THEME)
 
     def __onKeyRelease(self, event: Optional[tk.Event|None]=None):
-        """Обновляем подсветку после любого изменения"""
         self.highlightCurrentLine()
 
 
@@ -156,7 +149,7 @@ class Editor:
         self.__text.tag_lower("active_line")
 
 
-              
+
     def setFont(self, family: str = "Consolas", size: int = 12):
         self.__font = font.Font(family=family, size=size)
         self.__text.configure(font=self.__font)
@@ -175,7 +168,7 @@ class Editor:
             start = self.__text.index("sel.first")
             end = self.__text.index("sel.last")
         except tk.TclError:
-            self.__text.insert(tk.INSERT, "    ") 
+            self.__text.insert(tk.INSERT, "    ")
             return "break"
 
         start_line = int(start.split(".")[0])
@@ -184,7 +177,6 @@ class Editor:
         for line in range(start_line, end_line + 1):
             self.__text.insert(f"{line}.0", "    ")
 
-        # пересчитываем выделение, чтобы оно оставалось выделенным
         self.__text.tag_add("sel", f"{start_line}.0", f"{end_line}.end")
         return "break"
 
@@ -203,16 +195,13 @@ class Editor:
             line_start = f"{line}.0"
             line_text = self.__text.get(line_start, f"{line}.end")
 
-            # убираем первые 4 пробела или таб
             if line_text.startswith("    "):
                 self.__text.delete(line_start, f"{line_start}+4c")
             elif line_text.startswith("\t"):
                 self.__text.delete(line_start, f"{line_start}+1c")
 
-        # пересчитываем выделение
         self.__text.tag_add("sel", f"{start_line}.0", f"{end_line}.end")
         return "break"
-    ###
     def undo(self, event:Optional[tk.Event] = None):
         try:
             self.__text.edit_undo()
@@ -223,8 +212,8 @@ class Editor:
         try:
             self.__text.edit_redo()
         except tk.TclError:
-            pass    
-        
+            pass
+
     def setText(self, text: str):
         print("Text starts to set")
         self.__text.edit_modified(False)
@@ -234,20 +223,20 @@ class Editor:
         print("Text finished to set")
     def setFullText(self, text:str):
         self.__fullText = text
-    
+
 
     def __notModified(self):
         self.modified = False
-    
-    
-    def getText(self) -> str: 
+
+
+    def getText(self) -> str:
         print("Text returning to set")
         return self.__text.get(1.0, tk.END)
     def __onModified(self, event: tk.Event):
         if self.__text.edit_modified():
             self.modified = True
             self.__text.edit_modified(False)
-            
+
             self.__findPositions = []
             self.__findCurrentIdx = -1
             self.__findQuery = ""
@@ -270,23 +259,18 @@ class Editor:
 
         def do_find(event: Optional[tk.Event]=None):
             query = find_var.get()
-            # Если новый запрос — пересчитаем все совпадения
             if query != self.__findQuery:
                 self.__findQuery = query
                 self.__findCurrentIdx = -1
                 self.__findPositions = []
                 self.__findAll(query)
 
-            # Перейти к следующему совпадению (если есть)
             self.__findNext()
 
         entry.bind("<Return>", do_find)
 
-        # Кнопка Find (ведёт к следующему совпадению)
         tk.Button(win, text="Find", command=do_find).pack(pady=10)
     def __findAll(self, pattern: str):
-        """Найти все совпадения pattern и подсветить их (заполняет _find_positions)."""
-        # очистим предыдущие теги
         self.__text.tag_remove("find_match", "1.0", "end")
         self.__text.tag_remove("find_current", "1.0", "end")
         self.__findPositions.clear()
@@ -302,24 +286,18 @@ class Editor:
                 break
             end = f"{pos}+{len(pattern)}c"
             self.__text.tag_add("find_match", pos, end)
-            # сохраняем позиции в виде (start, end)
             self.__findPositions.append((pos, end))
             start_index = end
 
     def __findNext(self):
-        """Переключиться на следующее совпадение, выделить его другим тегом и проскроллить."""
         if not self.__findPositions:
             return
 
-        # снять старое текущее
         self.__text.tag_remove("find_current", "1.0", "end")
 
-        # переключаем индекс циклично
         self.__findCurrentIdx = (self.__findCurrentIdx + 1) % len(self.__findPositions)
 
         start, end = self.__findPositions[self.__findCurrentIdx]
-        # выделяем как текущий
         self.__text.tag_add("find_current", start, end)
-        # устанавливаем курсор туда и прокручиваем
         self.__text.mark_set("insert", start)
         self.__text.see(start)

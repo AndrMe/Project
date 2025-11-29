@@ -9,7 +9,6 @@ def getFont():
     return "Arial"
 DefaultTitle:str = "MyEditor"
 
-##TODO: add keybinds
 class UI:
     def __init__(self, context: Context):
         self.root: tk.Tk = context.root

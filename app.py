@@ -85,12 +85,11 @@ class App:
             self.editor.setText(text)
             self.__notifySaved()
     def save_settings(self):
-        # Здесь можно добавить вызов методов контекста для применения новых настроек
+
         self.context.app.isAutoSave = self.ui.autosave_enabled.get()
         self.context.app.autoSaveTimeSeconds = self.ui.autoSaveIntervalText.get()
         self.context.fileManager.setEncr(self.ui.encrypt_enabled.get())
         self.ui.onIsEncrypted(self.fileManager.isEncrypted)
-        # self.context.fileManager.onEncryptionModeChange()
         config.saveSettings(self.context.fileManager.isEncrypted,
                         self.isAutoSave,
                         self.autoSaveTimeSeconds)

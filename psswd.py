@@ -5,12 +5,11 @@ def showPasswordDialog(root: tk.Tk,  title: str="Enter Password") -> str | None:
         """Открывает модальное окно для ввода пароля и возвращает строку или None, если закрыто"""
         password = None
 
-        # Создаем окно
         pw_win = tk.Toplevel(root)
         pw_win.title(title)
         pw_win.geometry("300x120")
         pw_win.resizable(False, False)
-        pw_win.grab_set()  # делаем окно модальным (блокирует родительское)
+        pw_win.grab_set() 
 
         tk.Label(pw_win, text="Password:").pack(pady=(20, 5))
 
@@ -35,5 +34,5 @@ def showPasswordDialog(root: tk.Tk,  title: str="Enter Password") -> str | None:
         tk.Button(btn_frame, text="Cancel", width=10, command=cancel).pack(side="left", padx=5)
 
         pw_entry.bind('<Return>', func=submit)
-        pw_win.wait_window()  # ждем закрытия окна
+        pw_win.wait_window() 
         return password

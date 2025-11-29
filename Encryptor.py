@@ -4,15 +4,26 @@ from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
 from typing import Callable
 from typing import Optional
+import secrets
 
-MAGIC_HEADER = "MYENC1\n"
 
+HEADER = "MYENC1\n"
+
+ITERATIONS = 100_000
 class Encryptor:
     def __init__(self):
         self.wasEncrypted = False
     def derive_key(self, password: str) -> bytes:        
-        hash_bytes = hashlib.sha256(password.encode("utf-8")).digest()  
-        return base64.urlsafe_b64encode(hash_bytes)  
+        password_bytes = password.encode("utf-8")
+        salt = secrets.token_bytes(32) 
+        key = hashlib.pbkdf2_hmac(
+            hash_name="sha256",
+            password=password_bytes,
+            salt=salt,
+            iterations=ITERATIONS,
+            dklen=32
+        )
+        return base64.urlsafe_b64encode(key)
 
     def encrypt(self, text: str, key: bytes):
         print("started encryption")
@@ -20,7 +31,7 @@ class Encryptor:
         token = f.encrypt(text.encode("utf-8"))
         self.wasEncrypted
         print("encrypted")
-        return MAGIC_HEADER + token.decode("utf-8")
+        return HEADER + token.decode("utf-8")
     
     def decrypt(self, text: str, key: bytes):
         print("decrypted")
@@ -28,8 +39,8 @@ class Encryptor:
         decrypted = f.decrypt(text.encode("utf-8"))
         return decrypted.decode("utf-8")
     def decryptIfNeeded(self, text: str, hashCallBacl: Callable[..., Optional[bytes|None]]):
-        if text.startswith(MAGIC_HEADER):
-            text = text[len(MAGIC_HEADER):]  # убираем MAGIC_HEADER правильно
+        if text.startswith(HEADER):
+            text = text[len(HEADER):]  
             decrypted = None
             try:
                 key: bytes|None = hashCallBacl(reset = True)
