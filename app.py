@@ -70,16 +70,16 @@ class App:
         self.ui.onIsEncrypted(self.fileManager.isEncrypted)
     def save(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
-        self.fileManager.save(text)
-        self.__notifySaved()
+        saved = self.fileManager.save(text)
+        if (saved): self.__notifySaved()
     def saveAs(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
-        self.fileManager.saveAs(text)
-        self.__notifySaved()
+        saved = self.fileManager.saveAs(text)
+        if (saved): self.__notifySaved()
     def saveAsEncrypted(self, event:Optional[tk.Event] = None):
         text = self.editor.getText()
-        self.fileManager.saveAsEncr(text)
-        self.__notifySaved()
+        saved = self.fileManager.saveAsEncr(text)
+        if (saved): self.__notifySaved()
     def open(self, event:Optional[tk.Event] = None):
         if (self.editor.modified or (self.isAutoSaved == True)):
             self.askSaveDialog()

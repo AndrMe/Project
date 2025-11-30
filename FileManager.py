@@ -20,6 +20,7 @@ class FileManager:
         self.loadedFileName:Optional[str|None] = None
         self.isEncrypted = False
 
+
         self.psswdHash: bytes | None = None
 
     def removeTemp(self):
@@ -34,6 +35,7 @@ class FileManager:
         if (not(fileName)):
             fileName = filedialog.asksaveasfilename(initialfile="newFile.txt")
         if (fileName):
+            self.loadedFileName = fileName
             if (self.isEncrypted):
                     text = self.__encrypt(text)
             else:
@@ -49,9 +51,12 @@ class FileManager:
         
         fileName = filedialog.asksaveasfilename(initialfile=suggest)
         if (fileName):
-            
+            self.removeTemp()
+            self.loadedFileName = fileName
             self.__safeSaveToDisc(text, fileName)
             self.setEncr(False)
+            return True
+        return False
             
     def setEncr(self, encr:bool):
         if (not(encr)):
@@ -65,10 +70,14 @@ class FileManager:
         else: suggest = "newFile.enc"
         fileName = filedialog.asksaveasfilename(initialfile=suggest)
         if (fileName):
+            self.removeTemp()
+            self.loadedFileName = fileName
             self.encryptor.reset()
             encryptedText = self.__encrypt(text)
             self.__safeSaveToDisc(encryptedText, fileName)
             self.setEncr(True)
+            return True
+        return False
     def autoSave(self, text:str) -> bool:
         if (not(self.loadedFileName)): return False
         if (self.isEncrypted):
