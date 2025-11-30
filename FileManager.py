@@ -35,9 +35,9 @@ class FileManager:
             fileName = filedialog.asksaveasfilename(initialfile="newFile.txt")
         if (fileName):
             if (self.isEncrypted):
-                passwd = self.__getPassword()
-                if (not(passwd)): return False
-                text = self.__encrypt(text, passwd)
+                    text = self.__encrypt(text)
+            else:
+                self.encryptor.reset()
             self.__safeSaveToDisc(text, fileName)
             return True
         return False
@@ -49,13 +49,14 @@ class FileManager:
         
         fileName = filedialog.asksaveasfilename(initialfile=suggest)
         if (fileName):
+            
             self.__safeSaveToDisc(text, fileName)
             self.setEncr(False)
             
     def setEncr(self, encr:bool):
         if (not(encr)):
             self.isEncrypted = False
-            self.psswdHash = None
+            self.encryptor.reset()
         else:
             self.isEncrypted = True
     def saveAsEncr(self, text:str):
@@ -64,19 +65,16 @@ class FileManager:
         else: suggest = "newFile.enc"
         fileName = filedialog.asksaveasfilename(initialfile=suggest)
         if (fileName):
-            passwd = self.__getPassword(reset=True)
-            if (not(passwd)): return
-            encryptedText = self.__encrypt(text, passwd)
+            self.encryptor.reset()
+            encryptedText = self.__encrypt(text)
             self.__safeSaveToDisc(encryptedText, fileName)
             self.setEncr(True)
     def autoSave(self, text:str) -> bool:
         if (not(self.loadedFileName)): return False
         if (self.isEncrypted):
-            if (not(self.psswdHash)): return False
-            passwd = self.__getPassword()
-            if (not(passwd)): return False
-            fileText = self.__encrypt(text, passwd)
+            fileText = self.__encrypt(text)
         else: 
+            self.encryptor.reset()
             fileText = text
         tempPath = self.__tempPath(self.loadedFileName)
         with open(tempPath, "w", encoding="utf-8") as file:
@@ -87,17 +85,8 @@ class FileManager:
         return False
 
 
-    def __encrypt(self, text:str, psswdHash:bytes)->str:
-        return self.encryptor.encrypt(text, psswdHash)
-    def __getPassword(self, reset:bool = False) -> bytes | None:
-        if (reset): self.psswdHash = None
-        if self.psswdHash:
-            return self.psswdHash
-        pw = showPasswordDialog(self.context.app.root)
-        if not pw:
-            return None
-        self.psswdHash = self.encryptor.derive_key(pw)  # bytes
-        return self.psswdHash
+    def __encrypt(self, text:str)->str:
+        return self.encryptor.encrypt(text)
     def open(self)->Optional[str|None]:
         if (not(self.loadedFileName)): defaultPath = os.getcwd()
         else: defaultPath: str = self.loadedFileName
@@ -107,7 +96,7 @@ class FileManager:
             text = self.__checkTempOnOpen(fileName)
             if (text is None):
                 text = self.__read(fileName)
-            text = self.encryptor.decryptIfNeeded(text, self.__getPassword)
+            text = self.encryptor.decryptIfNeeded(text)
             if (text != None):
                 self.loadedFileName = fileName
                 self.isEncrypted = self.encryptor.wasEncrypted

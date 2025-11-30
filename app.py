@@ -9,6 +9,7 @@ from FileManager import FileManager
 from typing import Optional
 import config
 import time
+from  psswd import *
 
 class Context:
     app: App  
@@ -30,7 +31,7 @@ class App:
         self.isAutoSaved = False
         self.autoSaveTimeSeconds = asInterval
         
-        self.encryptor :Encryptor = Encryptor()
+        self.encryptor :Encryptor = Encryptor(self.getPsswd)
         self.context.encryptor = self.encryptor
         self.fileManager: FileManager = FileManager(self.context)
 
@@ -55,6 +56,8 @@ class App:
         
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
+    def getPsswd(self):
+        return showPasswordDialog(self.root)
     def __bindKeys(self):
         self.root.bind("<Control-i>", self.open)     
         self.root.bind("<Control-s>", self.save) 

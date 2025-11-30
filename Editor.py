@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from UI import UI
 
+
 from dataclasses import dataclass
 
 @dataclass
