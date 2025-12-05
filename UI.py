@@ -45,7 +45,7 @@ class UI:
         app = self.context.app
         self.fileMenu.add_command(label="Open", command = app.open, accelerator="Ctrl+I")
         self.fileMenu.add_command(label="Save(with current mode)", command = app.save, accelerator="Ctrl+S")
-        self.fileMenu.add_command(label="SaveAs", command = app.saveAs, accelerator = "Ctrl+A")
+        self.fileMenu.add_command(label="SaveAs", command = app.saveAs, accelerator = "Ctrl+Shift+S")
         self.fileMenu.add_command(label="SaveAsEncrypted", command = app.saveAsEncrypted, accelerator = "Ctrl+E")
         return self.fileMenu
     

@@ -5,7 +5,7 @@ from tkinter import font
 from  psswd import *
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from UI import UI
+    from ui import UI
 
 
 from dataclasses import dataclass

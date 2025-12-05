@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import messagebox
-from UI import UI
-from Editor import Editor
-from Encryptor import Encryptor
-from FileManager import FileManager
+from ui import UI
+from editor import Editor
+from encryptor import Encryptor
+from file_manager import FileManager
 from typing import Optional
 import config
 import time
@@ -61,7 +61,7 @@ class App:
     def __bindKeys(self):
         self.root.bind("<Control-i>", self.open)     
         self.root.bind("<Control-s>", self.save) 
-        self.root.bind("<Control-a>", self.saveAs)    
+        self.root.bind("<Control-Shift-S>", self.saveAs)    
         self.root.bind("<Control-e>", self.saveAsEncrypted)   
     def __notifySaved(self):
         self.editor.modified = False
