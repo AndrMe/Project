@@ -163,7 +163,6 @@ class Editor:
 
         self.__font.configure(size=new_size)
     def __onTab(self, event: tk.Event):
-        """Обрабатывает Tab — добавляет отступ для выделенных строк"""
         try:
             start = self.__text.index("sel.first")
             end = self.__text.index("sel.last")
@@ -174,14 +173,15 @@ class Editor:
         start_line = int(start.split(".")[0])
         end_line = int(end.split(".")[0])
 
-        for line in range(start_line, end_line + 1):
-            self.__text.insert(f"{line}.0", "    ")
+        lines = [self.__text.get(f"{line}.0", f"{line}.end") for line in range(start_line, end_line + 1)]
+        lines = ["    " + line for line in lines]
+        self.__text.delete(f"{start_line}.0", f"{end_line}.end")
+        self.__text.insert(f"{start_line}.0", "\n".join(lines))
 
         self.__text.tag_add("sel", f"{start_line}.0", f"{end_line}.end")
         return "break"
 
     def __onShiftTab(self, event: tk.Event):
-        """Обрабатывает Shift+Tab — удаляет отступ у выделенных строк"""
         try:
             start = self.__text.index("sel.first")
             end = self.__text.index("sel.last")
@@ -191,14 +191,18 @@ class Editor:
         start_line = int(start.split(".")[0])
         end_line = int(end.split(".")[0])
 
-        for line in range(start_line, end_line + 1):
-            line_start = f"{line}.0"
-            line_text = self.__text.get(line_start, f"{line}.end")
+        lines = [self.__text.get(f"{line}.0", f"{line}.end") for line in range(start_line, end_line + 1)]
+        def remove_indent(line: str):
+            if line.startswith("    "):
+                return line[4:]
+            elif line.startswith("\t"):
+                return line[1:]
+            return line
 
-            if line_text.startswith("    "):
-                self.__text.delete(line_start, f"{line_start}+4c")
-            elif line_text.startswith("\t"):
-                self.__text.delete(line_start, f"{line_start}+1c")
+        lines = [remove_indent(line) for line in lines]
+
+        self.__text.delete(f"{start_line}.0", f"{end_line}.end")
+        self.__text.insert(f"{start_line}.0", "\n".join(lines))
 
         self.__text.tag_add("sel", f"{start_line}.0", f"{end_line}.end")
         return "break"
