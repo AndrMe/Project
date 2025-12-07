@@ -98,7 +98,7 @@ class FileManager:
     def __encrypt(self, text:str)->str|None:
         try:
             newText = self.encryptor.encrypt(text)
-        except(e:Exception):
+        except Exception as e:
             newText = None
             messagebox.showerror("Ошибка", f"{e}", parent = self.context.app.root)
         return newText
@@ -120,7 +120,6 @@ class FileManager:
             return text
         return None
     def __checkTempOnOpen(self, filename: str) -> Optional[str]:
-        """Проверяем, есть ли автосохранение для данного файла."""
         temp_path = self.__tempPath(filename)
         if os.path.exists(temp_path):
             answer = messagebox.askyesno(
@@ -138,7 +137,6 @@ class FileManager:
             return loadedData
 
     def __safeSaveToDisc(self, text: str, path:str):
-        print("Started save")
         threading.Thread(target=self.__safeSaveToDiscThr, args=(text, path), daemon=True).start()
         
     

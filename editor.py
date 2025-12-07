@@ -244,7 +244,7 @@ class Editor:
             self.__text.tag_remove("find_match", "1.0", "end")
             self.__text.tag_remove("find_current", "1.0", "end")
     def openFindDialog(self):
-        """Открывает окно поиска"""
+        """Open search window"""
         win = tk.Toplevel(self.__root)
         win.title("Find")
         win.geometry("300x100")

@@ -13,17 +13,17 @@ ITERATIONS = 100_000
 class Encryptor:
     def __init__(self, psswdCallback: Callable[..., Optional[str]]):
         self.wasEncrypted = False
-        self.pssdHash = None
+        self.psswdHash = None
         self.salt = None
         self.psswdCallback = psswdCallback
 
     def reset(self):
-        self.pssdHash = None
+        self.psswdHash = None
         self.salt = None
     def getKey(self, reset:bool = False) -> bytes|None:
         if (reset): self.reset()
-        if (self.pssdHash is not None):
-            return self.pssdHash
+        if (self.psswdHash is not None):
+            return self.psswdHash
         password: str|None = self.psswdCallback()
         if (password == None):
             return None
@@ -38,8 +38,8 @@ class Encryptor:
             iterations=ITERATIONS,
             dklen=32
         )
-        self.pssdHash = base64.urlsafe_b64encode(key)
-        return self.pssdHash
+        self.psswdHash = base64.urlsafe_b64encode(key)
+        return self.psswdHash
     def getKeyFromSalt(self, salt:bytes) -> bytes|None:
         passwd = self.psswdCallback()
         if (passwd is None): return None
@@ -52,8 +52,8 @@ class Encryptor:
             iterations=ITERATIONS,
             dklen=32
         )
-        self.pssdHash = base64.urlsafe_b64encode(key)
-        return self.pssdHash
+        self.psswdHash = base64.urlsafe_b64encode(key)
+        return self.psswdHash
 
     def encrypt(self, text: str, reset: bool = False):
         key = self.getKey(reset= reset)

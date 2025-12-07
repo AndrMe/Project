@@ -2,7 +2,7 @@ import tkinter as tk
 from typing import Optional
 
 def showPasswordDialog(root: tk.Tk,  title: str="Enter Password") -> str | None:
-        """Открывает модальное окно для ввода пароля и возвращает строку или None, если закрыто"""
+        """Opens a modal window for entering a password and returns a string or None if closed."""
         password = None
 
         pw_win = tk.Toplevel(root)
