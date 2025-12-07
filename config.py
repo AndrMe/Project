@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import configparser
+import sys
 
 from typing import Any
 
@@ -40,13 +41,11 @@ def ifNull(value: Any, displayWhenNone:Any):
 DEFAULT_CONFIG = (False, True, 5.0)
 
 def loadSettings():
-    print("Loading Config")
     config = configparser.ConfigParser()
     if not CONFIG_PATH.exists():
         return DEFAULT_CONFIG
     config.read(CONFIG_PATH, encoding="utf-8")
     g = config['General']
-    print("Loaded Config")
     return (g.getboolean('encrypt', fallback=DEFAULT_CONFIG[0]),
             g.getboolean('autosave', fallback=DEFAULT_CONFIG[1]),
             g.getfloat('autosave_interval', fallback=DEFAULT_CONFIG[2]))

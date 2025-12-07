@@ -150,7 +150,6 @@ class Editor:
         self.__text.tag_lower("active_line")
 
 
-
     def setFont(self, family: str = "Consolas", size: int = 12):
         self.__font = font.Font(family=family, size=size)
         self.__text.configure(font=self.__font)
@@ -216,12 +215,10 @@ class Editor:
             pass
 
     def setText(self, text: str):
-        print("Text starts to set")
         self.__text.edit_modified(False)
         self.__text.delete("1.0", tk.END)
         self.__text.insert(tk.END, text)
         self.__root.after_idle(func = self.__notModified)
-        print("Text finished to set")
     def setFullText(self, text:str):
         self.__fullText = text
 
@@ -231,7 +228,6 @@ class Editor:
 
 
     def getText(self) -> str:
-        print("Text returning to set")
         return self.__text.get(1.0, tk.END)
     def __onModified(self, event: tk.Event):
         if self.__text.edit_modified():

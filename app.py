@@ -103,7 +103,9 @@ class App:
 
     def close(self):
         if (self.editor.modified or self.isAutoSaved):
-            self.askSaveDialog()            
+            while (True):
+                if (self.askSaveDialog()):
+                    break
         config.saveSettings(self.context.fileManager.isEncrypted,
                        self.isAutoSave,
                         self.autoSaveTimeSeconds)
@@ -124,12 +126,22 @@ class App:
         self.root.after(16, self.autoSave)
 
     def askSaveDialog(self):
+        if not (self.editor.modified or self.isAutoSaved):
+            return True 
         answer = messagebox.askyesno("Save File", "Save File?")
-        if (answer):
+        if answer is True:  
             text = self.editor.getText()
             saved = self.fileManager.save(text)
-            if (not(saved)): self.askSaveDialog()
+            if saved:
+                self.editor.modified = False
+                self.isAutoSaved = False
+                return True
+            else:
+                return False
+        elif answer is False: 
             self.editor.modified = False
+            self.isAutoSaved = False
+            self.fileManager.removeTemp()
             return True
-        self.fileManager.removeTemp()
-        return False
+        else: 
+            return False
