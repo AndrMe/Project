@@ -258,7 +258,7 @@ class Editor:
         entry.pack(padx=10)
         entry.focus_set()
 
-        def do_find(event: Optional[tk.Event]=None):
+        def __do_find(event: Optional[tk.Event]=None):
             query = find_var.get()
             if query != self.__findQuery:
                 self.__findQuery = query
@@ -268,9 +268,9 @@ class Editor:
 
             self.__findNext()
 
-        entry.bind("<Return>", do_find)
+        entry.bind("<Return>", __do_find)
 
-        tk.Button(win, text="Find", command=do_find).pack(pady=10)
+        tk.Button(win, text="Find", command=__do_find).pack(pady=10)
     def __findAll(self, pattern: str):
         self.__text.tag_remove("find_match", "1.0", "end")
         self.__text.tag_remove("find_current", "1.0", "end")
@@ -282,7 +282,7 @@ class Editor:
 
         start_index = "1.0"
         while True:
-            pos = self.__text.search(pattern, start_index, stopindex="end", nocase=True)
+            pos = self.__text.search(pattern, start_index, stopindex="end", nocase=True, regexp=False)
             if not pos:
                 break
             end = f"{pos}+{len(pattern)}c"
@@ -302,3 +302,4 @@ class Editor:
         self.__text.tag_add("find_current", start, end)
         self.__text.mark_set("insert", start)
         self.__text.see(start)
+    

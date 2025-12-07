@@ -11,7 +11,7 @@ HEADER = "MYENC1\n"
 
 ITERATIONS = 100_000
 class Encryptor:
-    def __init__(self, psswdCallback: Callable[..., Optional[str|None]]):
+    def __init__(self, psswdCallback: Callable[..., Optional[str]]):
         self.wasEncrypted = False
         self.pssdHash = None
         self.salt = None
@@ -28,7 +28,9 @@ class Encryptor:
         if (password == None):
             return None
         password_bytes = password.encode("utf-8")
-        self.salt = secrets.token_bytes(32) 
+        if self.salt is None:  
+            self.salt = secrets.token_bytes(32)
+         
         key = hashlib.pbkdf2_hmac(
             hash_name="sha256",
             password=password_bytes,
@@ -54,19 +56,20 @@ class Encryptor:
         return self.pssdHash
 
     def encrypt(self, text: str, reset: bool = False):
-        print("started encryption")
         key = self.getKey(reset= reset)
-        if (key == None): return text
+        if key is None:
+            raise ValueError("Cannot encrypt: no password provided")
+        
+        if self.salt is None:
+            raise ValueError("Cannot encrypt: salt not generated")
         f = Fernet(key)
         token = f.encrypt(text.encode("utf-8"))
-        self.wasEncrypted
-        print("encrypted")
-        if self.salt is None: return text
-        salt_b64 = base64.b64encode(self.salt).decode("utf-8") 
+        self.wasEncrypted = True
+        salt_b64 = base64.b64encode(self.salt).decode("utf-8")
         return HEADER + salt_b64 + "\n" + token.decode("utf-8")
+
     
     def decrypt(self, text: str, key: bytes):
-        print("decrypted")
         f = Fernet(key)
         decrypted = f.decrypt(text.encode("utf-8"))
         return decrypted.decode("utf-8")
@@ -96,10 +99,9 @@ class Encryptor:
             return None
 
         try:
-            _, token = text[len(HEADER):].split("\n", 1)  # <- отделяем токен
+            _, token = text[len(HEADER):].split("\n", 1)
             decrypted = self.decrypt(token, key)
             self.wasEncrypted = True
             return decrypted
         except InvalidToken:
-            print("failed to decrypt")
             return None

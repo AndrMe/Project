@@ -15,9 +15,8 @@ class FileManager:
     def __init__(self, context: Context) -> None:
         self.context = context
         self.encryptor = context.encryptor
-        self.x = 0
         #fields
-        self.loadedFileName:Optional[str|None] = None
+        self.loadedFileName:Optional[str] = None
         self.isEncrypted = False
 
 
@@ -32,15 +31,17 @@ class FileManager:
         
     def save(self, text:str)->bool:
         fileName = self.loadedFileName
+        newText = text
         if (not(fileName)):
             fileName = filedialog.asksaveasfilename(initialfile="newFile.txt")
         if (fileName):
             self.loadedFileName = fileName
             if (self.isEncrypted):
-                    text = self.__encrypt(text)
+                    newText = self.__encrypt(text)
+                    if (newText == None) : return False
             else:
                 self.encryptor.reset()
-            self.__safeSaveToDisc(text, fileName)
+            self.__safeSaveToDisc(newText, fileName)
             return True
         return False
 
@@ -74,6 +75,7 @@ class FileManager:
             self.loadedFileName = fileName
             self.encryptor.reset()
             encryptedText = self.__encrypt(text)
+            if (encryptedText == None) : return False
             self.__safeSaveToDisc(encryptedText, fileName)
             self.setEncr(True)
             return True
@@ -82,23 +84,27 @@ class FileManager:
         if (not(self.loadedFileName)): return False
         if (self.isEncrypted):
             fileText = self.__encrypt(text)
+            if (fileText == None) : return False
         else: 
             self.encryptor.reset()
             fileText = text
         tempPath = self.__tempPath(self.loadedFileName)
         with open(tempPath, "w", encoding="utf-8") as file:
                 file.write(fileText)
-                self.x = self.x + 1
-                print(f"{self.x}Saved To Temp")
                 return True
         return False
 
 
-    def __encrypt(self, text:str)->str:
-        return self.encryptor.encrypt(text)
-    def open(self)->Optional[str|None]:
+    def __encrypt(self, text:str)->str|None:
+        try:
+            newText = self.encryptor.encrypt(text)
+        except(e:Exception):
+            newText = None
+            messagebox.showerror("Ошибка", f"{e}", parent = self.context.app.root)
+        return newText
+    def open(self)->Optional[str]:
         if (not(self.loadedFileName)): defaultPath = os.getcwd()
-        else: defaultPath: str = self.loadedFileName
+        else: defaultPath: str = os.path.dirname(self.loadedFileName) or os.getcwd()
         fileName: str = filedialog.askopenfilename(initialdir=defaultPath, defaultextension="txt", title="File input")
         
         if (fileName and os.path.exists(fileName)):
@@ -136,21 +142,22 @@ class FileManager:
         threading.Thread(target=self.__safeSaveToDiscThr, args=(text, path), daemon=True).start()
         
     
-    def __safeSaveToDiscThr(self, text: str, path:str):
-        tempPath = self.__tempPath(path)
-        if (tempPath):
+    def __safeSaveToDiscThr(self, text: str, path: str):
+        try:
+            tempPath = self.__tempPath(path)
             with open(tempPath, "w", encoding="utf-8") as file:
                 file.write(text)
-                self.loadedFileName = path
-                print("Saved To Temp")
-        os.replace(tempPath, path)
-        print("Saved To Disc")
-    
+            os.replace(tempPath, path)
+        except Exception as e:
+            self.context.root.after(0, lambda: self.__onSaveError(e, path))
+
+    def __onSaveError(self, error: Exception, path: str):
+        messagebox.showerror("Save Error", f"Failed to save to {path}:\n{error}")
 
     def __tempPath(self, path:str)->str:
         baseName = os.path.basename(path)
-        dir = os.path.dirname(path)
-        return dir+ R"/" + tempName +baseName 
+        dirName = os.path.dirname(path)
+        return os.path.join(dirName, tempName + baseName)
     def __getEncName(self, name:str):
         if (name.endswith(".enc")):
             return name

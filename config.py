@@ -22,7 +22,6 @@ def getConfigPath(filename:str="settings.conf") -> Path:
 CONFIG_PATH = getConfigPath("settings.conf")
 
 def saveSettings(encrypt: bool, autosave: bool, autosave_interval: float):
-    print("Saving Config")
     config = configparser.ConfigParser()
     config['General'] = {
         'encrypt': str(encrypt),
@@ -31,7 +30,6 @@ def saveSettings(encrypt: bool, autosave: bool, autosave_interval: float):
     }
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         config.write(f)
-        print("Saved Config")
 
 def ifNull(value: Any, displayWhenNone:Any):
     return value if value is not None else displayWhenNone

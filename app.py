@@ -9,7 +9,7 @@ from file_manager import FileManager
 from typing import Optional
 import config
 import time
-from  psswd import *
+from psswd import showPasswordDialog
 
 class Context:
     app: App  
@@ -27,13 +27,13 @@ class App:
 
         self.root: tk.Tk = tk.Tk()
         encrypt, autoSave, asInterval = config.loadSettings()
-        self.isAutoSave = autoSave
-        self.isAutoSaved = False
-        self.autoSaveTimeSeconds = asInterval
+        self.isAutoSave: bool = autoSave
+        self.isAutoSaved: bool = False
+        self.autoSaveTimeSeconds: float = asInterval
         
-        self.encryptor :Encryptor = Encryptor(self.getPsswd)
+        self.encryptor:Encryptor = Encryptor(self.getPsswd)
         self.context.encryptor = self.encryptor
-        self.fileManager: FileManager = FileManager(self.context)
+        self.fileManager:FileManager = FileManager(self.context)
 
         self.context.app = self
         self.context.root = self.root  
@@ -81,7 +81,7 @@ class App:
         saved = self.fileManager.saveAsEncr(text)
         if (saved): self.__notifySaved()
     def open(self, event:Optional[tk.Event] = None):
-        if (self.editor.modified or (self.isAutoSaved == True)):
+        if self.editor.modified or self.isAutoSaved:
             self.askSaveDialog()
         text = self.fileManager.open()
         if (text != None):
@@ -89,8 +89,12 @@ class App:
             self.__notifySaved()
     def save_settings(self):
 
-        self.context.app.isAutoSave = self.ui.autosave_enabled.get()
-        self.context.app.autoSaveTimeSeconds = self.ui.autoSaveIntervalText.get()
+        self.isAutoSave = self.ui.autosave_enabled.get()
+        try:
+            interval: float = self.ui.autoSaveIntervalText.get()
+            self.autoSaveTimeSeconds = interval if (interval > 0) else self.autoSaveTimeSeconds
+        except(ValueError, tk.TclError):
+            self.ui.autoSaveIntervalText.set(self.autoSaveTimeSeconds)
         self.context.fileManager.setEncr(self.ui.encrypt_enabled.get())
         self.ui.onIsEncrypted(self.fileManager.isEncrypted)
         config.saveSettings(self.context.fileManager.isEncrypted,

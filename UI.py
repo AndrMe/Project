@@ -65,11 +65,11 @@ class UI:
     def __addMenu(self, name : str,  menu : tk.Menu):
         self.__menuBar.add_cascade(label = name, menu = menu)
         
-    def onOpen(self, filename:Optional[str|None]):
+    def onOpen(self, filename:Optional[str]):
         self.fileDisplayName = filename
         self.__updateName(filename)
 
-    def __updateName(self, fileName:Optional[str|None]):
+    def __updateName(self, fileName:Optional[str]):
         if (fileName):
             self.root.title(fileName + self.titleMessageAdd)
         else: 
